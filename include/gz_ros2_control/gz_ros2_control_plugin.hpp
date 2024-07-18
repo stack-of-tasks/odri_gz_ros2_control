@@ -25,7 +25,7 @@ namespace sim = gz::sim;
 namespace sim = ignition::gazebo;
 #endif
 
-namespace gz_ros2_control
+namespace odri_gz_ros2_control
 {
 // Forward declarations.
 class GazeboOdriSimROS2ControlPluginPrivate;

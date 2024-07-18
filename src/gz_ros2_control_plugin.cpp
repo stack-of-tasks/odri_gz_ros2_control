@@ -54,7 +54,7 @@
 #include "gz_ros2_control/gz_ros2_control_plugin.hpp"
 #include "gz_ros2_control/gz_system.hpp"
 
-namespace gz_ros2_control
+namespace odri_gz_ros2_control
 {
 //////////////////////////////////////////////////
 class GazeboOdriSimROS2ControlPluginPrivate
@@ -94,7 +94,7 @@ public:
 
   /// \brief Interface loader
   std::shared_ptr<pluginlib::ClassLoader<
-      gz_ros2_control::GazeboOdriSimSystemInterface>>
+                    odri_gz_ros2_control::GazeboOdriSimSystemInterface>>
   robot_hw_sim_loader_{nullptr};
 
   /// \brief Controller manager
@@ -154,7 +154,7 @@ GazeboOdriSimROS2ControlPluginPrivate::GetEnabledJoints(
         {
           RCLCPP_INFO(
             node_->get_logger(),
-            "[gz_ros2_control] Fixed joint [%s] (Entity=%lu)] is skipped",
+            "[odri_gz_ros2_control] Fixed joint [%s] (Entity=%lu)] is skipped",
             jointName.c_str(), jointEntity);
           continue;
         }
@@ -165,7 +165,7 @@ GazeboOdriSimROS2ControlPluginPrivate::GetEnabledJoints(
         {
           RCLCPP_WARN(
             node_->get_logger(),
-            "[gz_ros2_control] Joint [%s] (Entity=%lu)] is of unsupported type."
+            "[odri_gz_ros2_control] Joint [%s] (Entity=%lu)] is of unsupported type."
             " Only joints with a single axis are supported.",
             jointName.c_str(), jointEntity);
           continue;
@@ -174,7 +174,7 @@ GazeboOdriSimROS2ControlPluginPrivate::GetEnabledJoints(
         {
           RCLCPP_WARN(
             node_->get_logger(),
-            "[gz_ros2_control] Joint [%s] (Entity=%lu)] is of unknown type",
+            "[odri_gz_ros2_control] Joint [%s] (Entity=%lu)] is of unknown type",
             jointName.c_str(), jointEntity);
           continue;
         }
@@ -229,7 +229,7 @@ std::string GazeboOdriSimROS2ControlPluginPrivate::getURDF() const
       break;
     } else {
       RCLCPP_ERROR(
-        node_->get_logger(), "gz_ros2_control plugin is waiting for model"
+        node_->get_logger(), "odri_gz_ros2_control plugin is waiting for model"
         " URDF in parameter [%s] on the ROS param server.",
         this->robot_description_.c_str());
     }
@@ -354,7 +354,7 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
       rclcpp::SignalHandlerOptions::None);
   }
 
-  std::string node_name = "gz_ros_control";
+  std::string node_name = "odri_gz_ros2_control";
 
   this->dataPtr->node_ = rclcpp::Node::make_shared(node_name, ns);
   this->dataPtr->executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
@@ -395,7 +395,7 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
   } catch (const std::runtime_error & ex) {
     RCLCPP_ERROR_STREAM(
       this->dataPtr->node_->get_logger(),
-      "Error parsing URDF in gz_ros2_control plugin, plugin not active : " << ex.what());
+      "Error parsing URDF in odri_gz_ros2_control plugin, plugin not active : " << ex.what());
     return;
   }
 
@@ -410,9 +410,9 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
   }
   try {
     this->dataPtr->robot_hw_sim_loader_.reset(
-      new pluginlib::ClassLoader<gz_ros2_control::GazeboOdriSimSystemInterface>(
-        "gz_ros2_control",
-        "gz_ros2_control::GazeboOdriSimSystemInterface"));
+      new pluginlib::ClassLoader<odri_gz_ros2_control::GazeboOdriSimSystemInterface>(
+        "odri_gz_ros2_control",
+        "odri_gz_ros2_control::GazeboOdriSimSystemInterface"));
   } catch (pluginlib::LibraryLoadException & ex) {
     RCLCPP_ERROR(
       this->dataPtr->node_->get_logger(), "Failed to create robot simulation interface loader: %s ",
@@ -426,9 +426,9 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
       this->dataPtr->node_->get_logger(), "Load hardware interface %s ...",
       robot_hw_sim_type_str_.c_str());
 
-    std::unique_ptr<gz_ros2_control::GazeboOdriSimSystemInterface> gzSimSystem;
+    std::unique_ptr<odri_gz_ros2_control::GazeboOdriSimSystemInterface> gzSimSystem;
     try {
-      gzSimSystem = std::unique_ptr<gz_ros2_control::GazeboOdriSimSystemInterface>(
+      gzSimSystem = std::unique_ptr<odri_gz_ros2_control::GazeboOdriSimSystemInterface>(
         this->dataPtr->robot_hw_sim_loader_->createUnmanagedInstance(robot_hw_sim_type_str_));
     } catch (pluginlib::PluginlibException & ex) {
       RCLCPP_ERROR(
@@ -558,32 +558,32 @@ void GazeboOdriSimROS2ControlPlugin::PostUpdate(
   if (sim_period >= this->dataPtr->control_period_) {
     this->dataPtr->last_update_sim_time_ros_ = sim_time_ros;
     auto gz_controller_manager =
-      std::dynamic_pointer_cast<gz_ros2_control::GazeboOdriSimSystemInterface>(
+      std::dynamic_pointer_cast<odri_gz_ros2_control::GazeboOdriSimSystemInterface>(
       this->dataPtr->controller_manager_);
     this->dataPtr->controller_manager_->read(sim_time_ros, sim_period);
     this->dataPtr->controller_manager_->update(sim_time_ros, sim_period);
   }
 }
-}  // namespace gz_ros2_control
+}  // namespace odri_gz_ros2_control
 
 #ifdef GZ_HEADERS
 GZ_ADD_PLUGIN(
-  gz_ros2_control::GazeboOdriSimROS2ControlPlugin,
+  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin,
   gz::sim::System,
-  gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemConfigure,
-  gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPreUpdate,
-  gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPostUpdate)
+  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemConfigure,
+  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPreUpdate,
+  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPostUpdate)
 GZ_ADD_PLUGIN_ALIAS(
-  gz_ros2_control::GazeboOdriSimROS2ControlPlugin,
+  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin,
   "ign_ros2_control::IgnitionROS2ControlPlugin")
 #else
 IGNITION_ADD_PLUGIN(
-  gz_ros2_control::GazeboOdriSimROS2ControlPlugin,
+  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin,
   ignition::gazebo::System,
-  gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemConfigure,
-  gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPreUpdate,
-  gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPostUpdate)
+  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemConfigure,
+  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPreUpdate,
+  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPostUpdate)
 IGNITION_ADD_PLUGIN_ALIAS(
-  gz_ros2_control::GazeboOdriSimROS2ControlPlugin,
+  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin,
   "ign_ros2_control::IgnitionROS2ControlPlugin")
 #endif
