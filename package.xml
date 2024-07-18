@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>gz_ros2_control_odri</name>
+  <name>odri_gz_ros2_control</name>
   <version>1.2.2</version>
   <description>Gazebo ros2_control package allows to control simulated robots using ros2_control framework (ODRI fork).</description>
   <maintainer email="olivier.stasse@laas.fr">Olivier Stasse</maintainer>
