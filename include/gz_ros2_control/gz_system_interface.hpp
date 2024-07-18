@@ -34,7 +34,7 @@ namespace sim = ignition::gazebo;
 
 #include <rclcpp/rclcpp.hpp>
 
-namespace gz_ros2_control
+namespace odri_gz_ros2_control
 {
 
 /// \brief This class allows us to handle flags easily, instead of using strings

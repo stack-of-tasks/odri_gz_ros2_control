@@ -25,7 +25,7 @@
 #include "rclcpp_lifecycle/state.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 
-namespace gz_ros2_control
+namespace odri_gz_ros2_control
 {
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 

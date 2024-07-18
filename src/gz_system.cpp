@@ -97,7 +97,7 @@ struct jointData
   sim::Entity sim_joint;
 
   /// \brief Control method defined in the URDF for each joint.
-  gz_ros2_control::GazeboOdriSimSystemInterface::ControlMethod joint_control_method;
+  odri_gz_ros2_control::GazeboOdriSimSystemInterface::ControlMethod joint_control_method;
 };
 
 struct MimicJoint
@@ -141,7 +141,7 @@ void ImuData::OnIMU(const GZ_MSGS_NAMESPACE IMU & _msg)
   this->imu_sensor_data_[9] = _msg.linear_acceleration().z();
 }
 
-class gz_ros2_control::GazeboOdriSimSystemPrivate
+class odri_gz_ros2_control::GazeboOdriSimSystemPrivate
 {
 public:
   GazeboOdriSimSystemPrivate() = default;
@@ -185,7 +185,7 @@ public:
   bool hold_joints_ = true;
 };
 
-namespace gz_ros2_control
+namespace odri_gz_ros2_control
 {
 
 bool GazeboOdriSimSystem::initSim(
@@ -807,8 +807,8 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
 
   return hardware_interface::return_type::OK;
 }
-}  // namespace gz_ros2_control
+}  // namespace odri_gz_ros2_control
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
-PLUGINLIB_EXPORT_CLASS(
-  gz_ros2_control::GazeboOdriSimSystem, gz_ros2_control::GazeboOdriSimSystemInterface)
+PLUGINLIB_EXPORT_CLASS(odri_gz_ros2_control::GazeboOdriSimSystem,
+                       odri_gz_ros2_control::GazeboOdriSimSystemInterface)
