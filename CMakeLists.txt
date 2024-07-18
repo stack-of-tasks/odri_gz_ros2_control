@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(gz_ros2_control_odri)
+project(odri_gz_ros2_control)
 
 # Default to C11
 if(NOT CMAKE_C_STANDARD)
@@ -116,7 +116,7 @@ install(TARGETS ${PROJECT_NAME}-system
   DESTINATION lib
 )
 
-pluginlib_export_plugin_description_file(gz_ros2_control gz_hardware_odri_plugins.xml)
+pluginlib_export_plugin_description_file(odri_gz_ros2_control gz_hardware_odri_plugins.xml)
 
 # Setup the project
 ament_package()
