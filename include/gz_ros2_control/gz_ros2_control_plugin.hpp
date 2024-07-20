@@ -25,18 +25,15 @@ namespace sim = gz::sim;
 namespace sim = ignition::gazebo;
 #endif
 
-namespace odri_gz_ros2_control
-{
+namespace odri_gz_ros2_control {
 // Forward declarations.
 class GazeboOdriSimROS2ControlPluginPrivate;
 
-class GazeboOdriSimROS2ControlPlugin
-  : public sim::System,
-  public sim::ISystemConfigure,
-  public sim::ISystemPreUpdate,
-  public sim::ISystemPostUpdate
-{
-public:
+class GazeboOdriSimROS2ControlPlugin : public sim::System,
+                                       public sim::ISystemConfigure,
+                                       public sim::ISystemPreUpdate,
+                                       public sim::ISystemPostUpdate {
+ public:
   /// \brief Constructor
   GazeboOdriSimROS2ControlPlugin();
 
@@ -44,25 +41,22 @@ public:
   ~GazeboOdriSimROS2ControlPlugin() override;
 
   // Documentation inherited
-  void Configure(
-    const sim::Entity & _entity,
-    const std::shared_ptr<const sdf::Element> & _sdf,
-    sim::EntityComponentManager & _ecm,
-    sim::EventManager & _eventMgr) override;
+  void Configure(const sim::Entity& _entity,
+                 const std::shared_ptr<const sdf::Element>& _sdf,
+                 sim::EntityComponentManager& _ecm,
+                 sim::EventManager& _eventMgr) override;
 
   // Documentation inherited
-  void PreUpdate(
-    const sim::UpdateInfo & _info,
-    sim::EntityComponentManager & _ecm) override;
+  void PreUpdate(const sim::UpdateInfo& _info,
+                 sim::EntityComponentManager& _ecm) override;
 
-  void PostUpdate(
-    const sim::UpdateInfo & _info,
-    const sim::EntityComponentManager & _ecm) override;
+  void PostUpdate(const sim::UpdateInfo& _info,
+                  const sim::EntityComponentManager& _ecm) override;
 
-private:
+ private:
   /// \brief Private data pointer.
   std::unique_ptr<GazeboOdriSimROS2ControlPluginPrivate> dataPtr;
 };
-}  // namespace gz_ros2_control
+}  // namespace odri_gz_ros2_control
 
 #endif  // GZ_ROS2_CONTROL__GZ_ROS2_CONTROL_PLUGIN_HPP_
