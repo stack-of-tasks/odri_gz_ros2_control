@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#ifdef GZ_HEADERS
+#ifdef GZ_SIM_8
 #include <gz/msgs/imu.pb.h>
 
 #include <gz/sim/components/AngularVelocity.hh>
@@ -167,7 +167,7 @@ class odri_gz_ros2_control::GazeboOdriSimSystemPrivate {
   sim::EntityComponentManager *ecm;
 
   /// \brief controller update rate
-  int *update_rate;
+  unsigned int update_rate;
 
   /// \brief Gazebo communication node.
   GZ_TRANSPORT_NAMESPACE Node node;
@@ -188,7 +188,8 @@ bool GazeboOdriSimSystem::initSim(
     rclcpp::Node::SharedPtr &model_nh,
     std::map<std::string, sim::Entity> &enableJoints,
     const hardware_interface::HardwareInfo &hardware_info,
-    sim::EntityComponentManager &_ecm, int &update_rate) {
+    sim::EntityComponentManager &_ecm,
+    unsigned int update_rate) {
   this->dataPtr = std::make_unique<GazeboOdriSimSystemPrivate>();
   this->dataPtr->last_update_sim_time_ros_ = rclcpp::Time();
 
@@ -196,7 +197,7 @@ bool GazeboOdriSimSystem::initSim(
   this->dataPtr->ecm = &_ecm;
   this->dataPtr->n_dof_ = hardware_info.joints.size();
 
-  this->dataPtr->update_rate = &update_rate;
+  this->dataPtr->update_rate = update_rate;
 
   try {
     this->dataPtr->hold_joints_ =
@@ -669,7 +670,7 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
       double error;
       error = (this->dataPtr->joints_[i].joint_position -
                this->dataPtr->joints_[i].joint_position_cmd) *
-              *this->dataPtr->update_rate;
+          this->dataPtr->update_rate;
 
       // Calculate target velcity
       double target_vel = -this->dataPtr->position_proportional_gain_ * error;
@@ -741,7 +742,7 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
             position_mimicked_joint * mimic_joint.multiplier;
 
         double velocity_sp =
-            (-1.0) * position_error * (*this->dataPtr->update_rate);
+            (-1.0) * position_error * this->dataPtr->update_rate;
 
         auto vel =
             this->dataPtr->ecm->Component<sim::components::JointVelocityCmd>(

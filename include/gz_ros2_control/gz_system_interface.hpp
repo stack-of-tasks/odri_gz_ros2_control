@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#ifdef GZ_HEADERS
+#ifdef GZ_SIM_8
 #include <gz/sim/System.hh>
 namespace sim = gz::sim;
 #else
@@ -99,10 +99,11 @@ class GazeboOdriSimSystemInterface
   /// is related with the entity in Gazebo param[in] hardware_info structure
   /// with data from URDF. param[in] _ecm Entity-component manager. param[in]
   /// update_rate controller update rate
-  virtual bool initSim(rclcpp::Node::SharedPtr& model_nh,
-                       std::map<std::string, sim::Entity>& joints,
-                       const hardware_interface::HardwareInfo& hardware_info,
-                       sim::EntityComponentManager& _ecm, int& update_rate) = 0;
+   virtual bool initSim(rclcpp::Node::SharedPtr &model_nh,
+                        std::map<std::string, sim::Entity> &joints,
+                        const hardware_interface::HardwareInfo &hardware_info,
+                        sim::EntityComponentManager &_ecm,
+                        unsigned int update_rate) = 0;
 
   // Methods used to control a joint.
   enum ControlMethod_ {
