@@ -74,10 +74,11 @@ class GazeboOdriSimSystem : public GazeboOdriSimSystemInterface {
       const rclcpp::Time& time, const rclcpp::Duration& period) override;
 
   // Documentation Inherited
-  bool initSim(rclcpp::Node::SharedPtr& model_nh,
-               std::map<std::string, sim::Entity>& joints,
-               const hardware_interface::HardwareInfo& hardware_info,
-               sim::EntityComponentManager& _ecm, int& update_rate) override;
+  bool initSim(rclcpp::Node::SharedPtr &model_nh,
+               std::map<std::string, sim::Entity> &joints,
+               const hardware_interface::HardwareInfo &hardware_info,
+               sim::EntityComponentManager &_ecm,
+               unsigned int update_rate) override;
 
  private:
   // Register a sensor (for now just IMUs)

@@ -17,7 +17,7 @@
 
 #include <memory>
 
-#ifdef GZ_HEADERS
+#ifdef GZ_SIM_8
 #include <gz/sim/System.hh>
 namespace sim = gz::sim;
 #else
