@@ -655,18 +655,22 @@ GazeboOdriSimSystem::perform_command_mode_switch(
       {
         this->dataPtr->joints_[j].joint_control_method &=
           static_cast<ControlMethod_>(VELOCITY & EFFORT);
-      } else if (interface_name ==
-        (this->dataPtr->joints_[j].name + "/" +           // NOLINT
-        hardware_interface::HW_IF_VELOCITY))
-      {
-        this->dataPtr->joints_[j].joint_control_method &=
-          static_cast<ControlMethod_>(POSITION & EFFORT);
-      } else if (interface_name ==
-        (this->dataPtr->joints_[j].name + "/" +           // NOLINT
-        hardware_interface::HW_IF_EFFORT))
-      {
-        this->dataPtr->joints_[j].joint_control_method &=
-          static_cast<ControlMethod_>(POSITION & VELOCITY);
+      } else {
+        if (interface_name ==
+          (this->dataPtr->joints_[j].name + "/" +             // NOLINT
+          hardware_interface::HW_IF_VELOCITY))
+        {
+          this->dataPtr->joints_[j].joint_control_method &=
+            static_cast<ControlMethod_>(POSITION & EFFORT);
+        } else {
+          if (interface_name ==
+            (this->dataPtr->joints_[j].name + "/" +             // NOLINT
+            hardware_interface::HW_IF_EFFORT))
+          {
+            this->dataPtr->joints_[j].joint_control_method &=
+              static_cast<ControlMethod_>(POSITION & VELOCITY);
+          }
+        }
       }
     }
 
@@ -676,16 +680,20 @@ GazeboOdriSimSystem::perform_command_mode_switch(
         hardware_interface::HW_IF_POSITION))
       {
         this->dataPtr->joints_[j].joint_control_method |= POSITION;
-      } else if (interface_name ==
-        (this->dataPtr->joints_[j].name + "/" +           // NOLINT
-        hardware_interface::HW_IF_VELOCITY))
-      {
-        this->dataPtr->joints_[j].joint_control_method |= VELOCITY;
-      } else if (interface_name ==
-        (this->dataPtr->joints_[j].name + "/" +           // NOLINT
-        hardware_interface::HW_IF_EFFORT))
-      {
-        this->dataPtr->joints_[j].joint_control_method |= EFFORT;
+      } else {
+        if (interface_name ==
+          (this->dataPtr->joints_[j].name + "/" +             // NOLINT
+          hardware_interface::HW_IF_VELOCITY))
+        {
+          this->dataPtr->joints_[j].joint_control_method |= VELOCITY;
+        } else {
+          if (interface_name ==
+            (this->dataPtr->joints_[j].name + "/" +             // NOLINT
+            hardware_interface::HW_IF_EFFORT))
+          {
+            this->dataPtr->joints_[j].joint_control_method |= EFFORT;
+          }
+        }
       }
     }
   }
@@ -729,8 +737,10 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
         this->dataPtr->ecm->CreateComponent(
           this->dataPtr->joints_[i].sim_joint,
           sim::components::JointVelocityCmd({target_vel}));
-      } else if (!vel->Data().empty()) {
-        vel->Data()[0] = target_vel;
+      } else {
+        if (!vel->Data().empty()) {
+          vel->Data()[0] = target_vel;
+        }
       }
     } else if (this->dataPtr->joints_[i].joint_control_method & EFFORT) {
       if (!this->dataPtr->ecm->Component<sim::components::JointForceCmd>(
@@ -746,23 +756,25 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
         *jointEffortCmd = sim::components::JointForceCmd(
           {this->dataPtr->joints_[i].joint_effort_cmd});
       }
-    } else if (this->dataPtr->joints_[i].is_actuated &&
-      this->dataPtr->hold_joints_)
-    {
-      // Fallback case is a velocity command of zero (only for actuated joints)
-      double target_vel = 0.0;
-      auto vel =
-        this->dataPtr->ecm->Component<sim::components::JointVelocityCmd>(
-        this->dataPtr->joints_[i].sim_joint);
+    } else {
+      if (this->dataPtr->joints_[i].is_actuated &&
+        this->dataPtr->hold_joints_)
+      {
+        // Fallback case is a velocity command of zero (only for actuated joints)
+        double target_vel = 0.0;
+        auto vel =
+          this->dataPtr->ecm->Component<sim::components::JointVelocityCmd>(
+          this->dataPtr->joints_[i].sim_joint);
 
-      if (vel == nullptr) {
-        this->dataPtr->ecm->CreateComponent(
-          this->dataPtr->joints_[i].sim_joint,
-          sim::components::JointVelocityCmd({target_vel}));
-      } else if (!vel->Data().empty()) {
-        vel->Data()[0] = target_vel;
-      } else if (!vel->Data().empty()) {
-        vel->Data()[0] = target_vel;
+        if (vel == nullptr) {
+          this->dataPtr->ecm->CreateComponent(
+            this->dataPtr->joints_[i].sim_joint,
+            sim::components::JointVelocityCmd({target_vel}));
+        } else if (!vel->Data().empty()) {
+          vel->Data()[0] = target_vel;
+        } else if (!vel->Data().empty()) {
+          vel->Data()[0] = target_vel;
+        }
       }
     }
   }
