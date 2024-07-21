@@ -34,10 +34,10 @@ OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
 # Remove prefix Codename:
-string(REGEX REPLACE "Codename:	" "" LSB_RELEASE_CODENAME ${LSB_RELEASE_CODENAME_PPREFIX})
+string(REGEX REPLACE "Codename:\t" "" LSB_RELEASE_CODENAME ${LSB_RELEASE_CODENAME_PPREFIX})
 message(STATUS "LSB_RELEASE_CODENAME=${LSB_RELEASE_CODENAME}")
 
-if (${LSB_RELEASE_CODENAME} STREQUAL "jammy")
+if(${LSB_RELEASE_CODENAME} STREQUAL "jammy")
   # If Jammy is detected uses Gazebo Fortress
   find_package(ignition-gazebo6 REQUIRED)
   set(GZ_SIM_VER ${ignition-gazebo6_VERSION_MAJOR})
@@ -46,13 +46,13 @@ if (${LSB_RELEASE_CODENAME} STREQUAL "jammy")
   set(GZ_PLUGIN_VER ${ignition-plugin1_VERSION_MAJOR})
   set(GZ_PLUGIN ignition-plugin${GZ_PLUGIN_VER}::register)
   set(GZ_SIM ignition-gazebo${GZ_SIM_VER}::core)
-elseif (${LSB_RELEASE_CODENAME} STREQUAL "noble")
+elseif(${LSB_RELEASE_CODENAME} STREQUAL "noble")
   # If Jammy is detected uses Harmonic
-  find_package(gz_sim_vendor )
-  find_package(gz-sim )
+  find_package(gz_sim_vendor)
+  find_package(gz-sim)
 
-  find_package(gz_plugin_vendor )
-  find_package(gz-plugin )
+  find_package(gz_plugin_vendor)
+  find_package(gz-plugin)
 endif()
 
 include_directories(include)
@@ -61,12 +61,12 @@ add_library(${PROJECT_NAME}-system SHARED
   src/gz_ros2_control_plugin.cpp
 )
 
-if (${LSB_RELEASE_CODENAME} STREQUAL "jammy")
+if(${LSB_RELEASE_CODENAME} STREQUAL "jammy")
 target_link_libraries(${PROJECT_NAME}-system
   ${GZ_SIM}
   ${GZ_PLUGIN}
 )
-elseif (${LSB_RELEASE_CODENAME} STREQUAL "noble")
+elseif(${LSB_RELEASE_CODENAME} STREQUAL "noble")
 message(STATUS "Add target ${PROJECT_NAME}-system using noble")
 target_compile_definitions(${PROJECT_NAME}-system PUBLIC GZ_SIM_8)
 target_link_libraries(${PROJECT_NAME}-system
@@ -96,11 +96,11 @@ ament_target_dependencies(gz_hardware_odri_plugins
   rclcpp
 )
 
-if (${LSB_RELEASE_CODENAME} STREQUAL "jammy")
+if(${LSB_RELEASE_CODENAME} STREQUAL "jammy")
 target_link_libraries(gz_hardware_odri_plugins
   ${GZ_SIM}
 )
-elseif (${LSB_RELEASE_CODENAME} STREQUAL "noble")
+elseif(${LSB_RELEASE_CODENAME} STREQUAL "noble")
 target_compile_definitions(gz_hardware_odri_plugins PUBLIC GZ_SIM_8)
 target_link_libraries(gz_hardware_odri_plugins
   gz-sim::gz-sim
