@@ -57,9 +57,9 @@ class SafeEnum {
  public:
   SafeEnum() : mFlags(0) {}
   explicit SafeEnum(ENUM singleFlag) : mFlags(singleFlag) {}
-  SafeEnum(const SafeEnum& original) : mFlags(original.mFlags) {}
+  SafeEnum(const SafeEnum &original) : mFlags(original.mFlags) {}
 
-  SafeEnum& operator|=(ENUM addValue) {
+  SafeEnum &operator|=(ENUM addValue) {
     mFlags |= addValue;
     return *this;
   }
@@ -68,7 +68,7 @@ class SafeEnum {
     result |= addValue;
     return result;
   }
-  SafeEnum& operator&=(ENUM maskValue) {
+  SafeEnum &operator&=(ENUM maskValue) {
     mFlags &= maskValue;
     return *this;
   }
@@ -99,11 +99,11 @@ class GazeboOdriSimSystemInterface
   /// is related with the entity in Gazebo param[in] hardware_info structure
   /// with data from URDF. param[in] _ecm Entity-component manager. param[in]
   /// update_rate controller update rate
-   virtual bool initSim(rclcpp::Node::SharedPtr &model_nh,
-                        std::map<std::string, sim::Entity> &joints,
-                        const hardware_interface::HardwareInfo &hardware_info,
-                        sim::EntityComponentManager &_ecm,
-                        unsigned int update_rate) = 0;
+  virtual bool initSim(rclcpp::Node::SharedPtr &model_nh,
+                       std::map<std::string, sim::Entity> &joints,
+                       const hardware_interface::HardwareInfo &hardware_info,
+                       sim::EntityComponentManager &_ecm,
+                       unsigned int update_rate) = 0;
 
   // Methods used to control a joint.
   enum ControlMethod_ {

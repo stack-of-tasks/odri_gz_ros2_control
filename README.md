@@ -1,4 +1,4 @@
-# ODRI Gazebo ros2_control plugin 
+# ODRI Gazebo ros2_control plugin
 
 This plug is a fork of [gz_ros2_control](https://github.com/ros-controls/gz_ros2_control).
 It implements the specificities of ODRI that are accessible through ros2_control.
@@ -27,5 +27,5 @@ Then the target is to  try to maintain this package for:
 # Branches
 
 master: Targets rolling releases and for now jammy and noble
-jazzy: target 
+jazzy: target
 humble:
