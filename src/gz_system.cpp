@@ -188,8 +188,7 @@ bool GazeboOdriSimSystem::initSim(
     rclcpp::Node::SharedPtr &model_nh,
     std::map<std::string, sim::Entity> &enableJoints,
     const hardware_interface::HardwareInfo &hardware_info,
-    sim::EntityComponentManager &_ecm,
-    unsigned int update_rate) {
+    sim::EntityComponentManager &_ecm, unsigned int update_rate) {
   this->dataPtr = std::make_unique<GazeboOdriSimSystemPrivate>();
   this->dataPtr->last_update_sim_time_ros_ = rclcpp::Time();
 
@@ -670,7 +669,7 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
       double error;
       error = (this->dataPtr->joints_[i].joint_position -
                this->dataPtr->joints_[i].joint_position_cmd) *
-          this->dataPtr->update_rate;
+              this->dataPtr->update_rate;
 
       // Calculate target velcity
       double target_vel = -this->dataPtr->position_proportional_gain_ * error;

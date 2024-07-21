@@ -52,18 +52,16 @@
 #include "gz_ros2_control/gz_system.hpp"
 
 namespace odri_gz_ros2_control {
-class GZResourceManager : public hardware_interface::ResourceManager
-{
-public:
-  GZResourceManager(
-    rclcpp::Node::SharedPtr & node,
-    sim::EntityComponentManager & ecm,
-    std::map<std::string, sim::Entity> enabledJoints)
-  : hardware_interface::ResourceManager(
-      node->get_node_clock_interface(), node->get_node_logging_interface()),
-    gz_system_loader_("gz_ros2_control", "gz_ros2_control::GazeboOdriSimSystemInterface"),
-    logger_(node->get_logger().get_child("GZResourceManager"))
-  {
+class GZResourceManager : public hardware_interface::ResourceManager {
+ public:
+  GZResourceManager(rclcpp::Node::SharedPtr &node,
+                    sim::EntityComponentManager &ecm,
+                    std::map<std::string, sim::Entity> enabledJoints)
+      : hardware_interface::ResourceManager(node->get_node_clock_interface(),
+                                            node->get_node_logging_interface()),
+        gz_system_loader_("gz_ros2_control",
+                          "gz_ros2_control::GazeboOdriSimSystemInterface"),
+        logger_(node->get_logger().get_child("GZResourceManager")) {
     node_ = node;
     ecm_ = &ecm;
     enabledJoints_ = enabledJoints;
@@ -71,51 +69,48 @@ public:
 
   GZResourceManager(const GZResourceManager &) = delete;
 
-  // Called from Controller Manager when robot description is initialized from callback
-  bool load_and_initialize_components(
-    const std::string & urdf,
-    unsigned int update_rate) override
-  {
+  // Called from Controller Manager when robot description is initialized from
+  // callback
+  bool load_and_initialize_components(const std::string &urdf,
+                                      unsigned int update_rate) override {
     components_are_loaded_and_initialized_ = true;
 
-    const auto hardware_info = hardware_interface::parse_control_resources_from_urdf(urdf);
+    const auto hardware_info =
+        hardware_interface::parse_control_resources_from_urdf(urdf);
 
-    for (const auto & individual_hardware_info : hardware_info) {
-      std::string robot_hw_sim_type_str_ = individual_hardware_info.hardware_plugin_name;
-      RCLCPP_DEBUG(
-        logger_, "Load hardware interface %s ...",
-        robot_hw_sim_type_str_.c_str());
+    for (const auto &individual_hardware_info : hardware_info) {
+      std::string robot_hw_sim_type_str_ =
+          individual_hardware_info.hardware_plugin_name;
+      RCLCPP_DEBUG(logger_, "Load hardware interface %s ...",
+                   robot_hw_sim_type_str_.c_str());
 
       // Load hardware
-      std::unique_ptr<odri_gz_ros2_control::GazeboOdriSimSystemInterface> gzSimSystem;
-      std::scoped_lock guard(resource_interfaces_lock_, claimed_command_interfaces_lock_);
+      std::unique_ptr<odri_gz_ros2_control::GazeboOdriSimSystemInterface>
+          gzSimSystem;
+      std::scoped_lock guard(resource_interfaces_lock_,
+                             claimed_command_interfaces_lock_);
       try {
-        gzSimSystem = std::unique_ptr<odri_gz_ros2_control::GazeboOdriSimSystemInterface>(
-          gz_system_loader_.createUnmanagedInstance(robot_hw_sim_type_str_));
-      } catch (pluginlib::PluginlibException & ex) {
-        RCLCPP_ERROR(
-          logger_,
-          "The plugin failed to load for some reason. Error: %s\n",
-          ex.what());
+        gzSimSystem =
+            std::unique_ptr<odri_gz_ros2_control::GazeboOdriSimSystemInterface>(
+                gz_system_loader_.createUnmanagedInstance(
+                    robot_hw_sim_type_str_));
+      } catch (pluginlib::PluginlibException &ex) {
+        RCLCPP_ERROR(logger_,
+                     "The plugin failed to load for some reason. Error: %s\n",
+                     ex.what());
         continue;
       }
 
       // initialize simulation requirements
-      if (!gzSimSystem->initSim(
-          node_,
-          enabledJoints_,
-          individual_hardware_info,
-          *ecm_,
-          update_rate))
-      {
-        RCLCPP_FATAL(
-          logger_, "Could not initialize robot simulation interface");
+      if (!gzSimSystem->initSim(node_, enabledJoints_, individual_hardware_info,
+                                *ecm_, update_rate)) {
+        RCLCPP_FATAL(logger_,
+                     "Could not initialize robot simulation interface");
         components_are_loaded_and_initialized_ = false;
         break;
       }
-      RCLCPP_DEBUG(
-        logger_, "Initialized robot simulation interface %s!",
-        robot_hw_sim_type_str_.c_str());
+      RCLCPP_DEBUG(logger_, "Initialized robot simulation interface %s!",
+                   robot_hw_sim_type_str_.c_str());
 
       // initialize hardware
       import_component(std::move(gzSimSystem), individual_hardware_info);
@@ -124,13 +119,14 @@ public:
     return components_are_loaded_and_initialized_;
   }
 
-private:
+ private:
   std::shared_ptr<rclcpp::Node> node_;
-  sim::EntityComponentManager * ecm_;
+  sim::EntityComponentManager *ecm_;
   std::map<std::string, sim::Entity> enabledJoints_;
 
   /// \brief Interface loader
-  pluginlib::ClassLoader<odri_gz_ros2_control::GazeboOdriSimSystemInterface> gz_system_loader_;
+  pluginlib::ClassLoader<odri_gz_ros2_control::GazeboOdriSimSystemInterface>
+      gz_system_loader_;
 
   rclcpp::Logger logger_;
 };
@@ -467,32 +463,34 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
   }
 
   std::unique_ptr<hardware_interface::ResourceManager> resource_manager_ =
-    std::make_unique<odri_gz_ros2_control::GZResourceManager>(this->dataPtr->node_, _ecm, enabledJoints);
+      std::make_unique<odri_gz_ros2_control::GZResourceManager>(
+          this->dataPtr->node_, _ecm, enabledJoints);
 
   // Create the controller manager
   RCLCPP_INFO(this->dataPtr->node_->get_logger(), "Loading controller_manager");
   this->dataPtr->controller_manager_.reset(
-    new controller_manager::ControllerManager(
-      std::move(resource_manager_),
-      this->dataPtr->executor_,
-      controllerManagerNodeName,
-      this->dataPtr->node_->get_namespace()));
+      new controller_manager::ControllerManager(
+          std::move(resource_manager_), this->dataPtr->executor_,
+          controllerManagerNodeName, this->dataPtr->node_->get_namespace()));
   this->dataPtr->executor_->add_node(this->dataPtr->controller_manager_);
 
-  this->dataPtr->update_rate = this->dataPtr->controller_manager_->get_update_rate();
-  this->dataPtr->control_period_ = rclcpp::Duration(
-    std::chrono::duration_cast<std::chrono::nanoseconds>(
-      std::chrono::duration<double>(1.0 / static_cast<double>(this->dataPtr->update_rate))));
+  this->dataPtr->update_rate =
+      this->dataPtr->controller_manager_->get_update_rate();
+  this->dataPtr->control_period_ =
+      rclcpp::Duration(std::chrono::duration_cast<std::chrono::nanoseconds>(
+          std::chrono::duration<double>(
+              1.0 / static_cast<double>(this->dataPtr->update_rate))));
 
   // Force setting of use_sim_time parameter
   this->dataPtr->controller_manager_->set_parameter(
-    rclcpp::Parameter("use_sim_time", rclcpp::ParameterValue(true)));
+      rclcpp::Parameter("use_sim_time", rclcpp::ParameterValue(true)));
 
-  // Wait for CM to receive robot description from the topic and then initialize Resource Manager
-  while (!this->dataPtr->controller_manager_->is_resource_manager_initialized()) {
-    RCLCPP_WARN(
-      this->dataPtr->node_->get_logger(),
-      "Waiting RM to load and initialize hardware...");
+  // Wait for CM to receive robot description from the topic and then initialize
+  // Resource Manager
+  while (
+      !this->dataPtr->controller_manager_->is_resource_manager_initialized()) {
+    RCLCPP_WARN(this->dataPtr->node_->get_logger(),
+                "Waiting RM to load and initialize hardware...");
     std::this_thread::sleep_for(std::chrono::microseconds(2000000));
   }
 
@@ -502,7 +500,6 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
 //////////////////////////////////////////////////
 void GazeboOdriSimROS2ControlPlugin::PreUpdate(
     const sim::UpdateInfo &_info, sim::EntityComponentManager & /*_ecm*/) {
-
   if (!this->dataPtr->controller_manager_) {
     return;
   }
