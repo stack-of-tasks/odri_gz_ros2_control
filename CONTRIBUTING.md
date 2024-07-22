@@ -66,4 +66,3 @@ be under the Apache 2 License, as dictated by that
 [issues]: https://github.com/stack-of-tasks/odri_gz_ros2_control_demos/issues
 [closed-issues]: https://github.com/stack_of_tasks/odri_gz_ros2_control_demos/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aclosed%20
 [help-wanted]: https://github.com/stack_of_tasks/odri_gz_ros2_control_demos/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22
-
