@@ -1,4 +1,4 @@
-# ODRI Gazebo ros2_control plugin
+# ODRI Gazebo odri_gz_ros2_control
 
 This plug is a fork of [gz_ros2_control](https://github.com/ros-controls/gz_ros2_control).
 It implements the specificities of ODRI that are accessible through ros2_control.
