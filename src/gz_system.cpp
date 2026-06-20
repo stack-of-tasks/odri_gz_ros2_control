@@ -17,6 +17,13 @@
 #include <gz/msgs/imu.pb.h>
 #include <gz/msgs/wrench.pb.h>
 
+// String constants matching
+// ros2_hardware_interface_odri/system_interface_odri.hpp
+namespace ros2_control_odri {
+constexpr const char *HW_IF_GAIN_KP = "gain_kp";
+constexpr const char *HW_IF_GAIN_KD = "gain_kd";
+}  // namespace ros2_control_odri
+
 #include <array>
 #include <cstddef>
 #include <gz/physics/Geometry.hh>
@@ -129,6 +136,7 @@ class odri_gz_ros2_control::GazeboOdriSimSystemPrivate {
   unsigned int update_rate;
   gz::transport::Node node;
   bool hold_joints_ = true;
+  double position_proportional_gain_ = 0.1;
 };
 
 namespace odri_gz_ros2_control {
@@ -227,9 +235,9 @@ bool GazeboOdriSimSystem::initSim(
     this->dataPtr->joints_[j].if_name_effort =
         joint_name + "/" + hardware_interface::HW_IF_EFFORT;
     this->dataPtr->joints_[j].if_name_gain_kp =
-        joint_name + "/" + hardware_interface::HW_IF_GAIN_KP;
+        joint_name + "/" + ros2_control_odri::HW_IF_GAIN_KP;
     this->dataPtr->joints_[j].if_name_gain_kd =
-        joint_name + "/" + hardware_interface::HW_IF_GAIN_KD;
+        joint_name + "/" + ros2_control_odri::HW_IF_GAIN_KD;
 
     // Log if joint is a mimic joint
     auto it_mimic = std::find_if(hardware_info.mimic_joints.begin(),
@@ -277,6 +285,8 @@ bool GazeboOdriSimSystem::initSim(
     double initial_position = std::numeric_limits<double>::quiet_NaN();
     double initial_velocity = std::numeric_limits<double>::quiet_NaN();
     double initial_effort = std::numeric_limits<double>::quiet_NaN();
+    double initial_Kp = std::numeric_limits<double>::quiet_NaN();
+    double initial_Kd = std::numeric_limits<double>::quiet_NaN();
 
     // register the state handles
     for (unsigned int i = 0; i < joint_info.state_interfaces.size(); ++i) {
@@ -307,18 +317,18 @@ bool GazeboOdriSimSystem::initSim(
       if (joint_info.state_interfaces[i].name == "gain_kp") {
         RCLCPP_INFO_STREAM(this->nh_->get_logger(), "\t\t gain_kp");
         this->dataPtr->state_interfaces_.emplace_back(
-            joint_name, hardware_interface::HW_IF_GAIN_KP,
+            joint_name, ros2_control_odri::HW_IF_GAIN_KP,
             &this->dataPtr->joints_[j].joint_Kp);
-        initial_effort = get_initial_value(joint_info.state_interfaces[i]);
-        this->dataPtr->joints_[j].joint_effort = initial_effort;
+        initial_Kp = get_initial_value(joint_info.state_interfaces[i]);
+        this->dataPtr->joints_[j].joint_Kp = initial_Kp;
       }
       if (joint_info.state_interfaces[i].name == "gain_kd") {
         RCLCPP_INFO_STREAM(this->nh_->get_logger(), "\t\t gain_kd");
         this->dataPtr->state_interfaces_.emplace_back(
-            joint_name, hardware_interface::HW_IF_GAIN_KD,
+            joint_name, ros2_control_odri::HW_IF_GAIN_KD,
             &this->dataPtr->joints_[j].joint_Kd);
-        initial_effort = get_initial_value(joint_info.state_interfaces[i]);
-        this->dataPtr->joints_[j].joint_effort = initial_effort;
+        initial_Kd = get_initial_value(joint_info.state_interfaces[i]);
+        this->dataPtr->joints_[j].joint_Kd = initial_Kd;
       }
     }
 
@@ -353,17 +363,17 @@ bool GazeboOdriSimSystem::initSim(
       } else if (joint_info.command_interfaces[i].name == "gain_kp") {
         RCLCPP_INFO_STREAM(this->nh_->get_logger(), "\t\t Gain Kp");
         this->dataPtr->command_interfaces_.emplace_back(
-            joint_name, hardware_interface::HW_IF_GAIN_KP,
+            joint_name, ros2_control_odri::HW_IF_GAIN_KP,
             &this->dataPtr->joints_[j].joint_Kp_cmd);
-        if (!std::isnan(initial_effort)) {
+        if (!std::isnan(initial_Kp)) {
           this->dataPtr->joints_[j].joint_Kp_cmd = initial_Kp;
         }
       } else if (joint_info.command_interfaces[i].name == "gain_kd") {
         RCLCPP_INFO_STREAM(this->nh_->get_logger(), "\t\t Gain Kd");
         this->dataPtr->command_interfaces_.emplace_back(
-            joint_name, hardware_interface::HW_IF_GAIN_KD,
+            joint_name, ros2_control_odri::HW_IF_GAIN_KD,
             &this->dataPtr->joints_[j].joint_Kd_cmd);
-        if (!std::isnan(initial_effort)) {
+        if (!std::isnan(initial_Kd)) {
           this->dataPtr->joints_[j].joint_Kd_cmd = initial_Kd;
         }
       }
@@ -628,15 +638,12 @@ GazeboOdriSimSystem::perform_command_mode_switch(
     const std::vector<std::string> &stop_interfaces) {
   for (unsigned int j = 0; j < this->dataPtr->joints_.size(); j++) {
     for (const std::string &interface_name : stop_interfaces) {
-      if (interface_name == this->dataPtr->joints_[j].if_name_position) {
-        this->dataPtr->joints_[j].joint_control_method &=
-            static_cast<ControlMethod_>(VELOCITY & EFFORT);
-      } else if (interface_name == this->dataPtr->joints_[j].if_name_velocity) {
-        this->dataPtr->joints_[j].joint_control_method &=
-            static_cast<ControlMethod_>(POSITION & EFFORT);
-      } else if (interface_name == this->dataPtr->joints_[j].if_name_effort) {
-        this->dataPtr->joints_[j].joint_control_method &=
-            static_cast<ControlMethod_>(POSITION & VELOCITY);
+      if (interface_name == this->dataPtr->joints_[j].if_name_position ||
+          interface_name == this->dataPtr->joints_[j].if_name_velocity ||
+          interface_name == this->dataPtr->joints_[j].if_name_effort ||
+          interface_name == this->dataPtr->joints_[j].if_name_gain_kp ||
+          interface_name == this->dataPtr->joints_[j].if_name_gain_kd) {
+        this->dataPtr->joints_[j].joint_control_method = ControlMethod(NONE);
       }
     }
 
@@ -647,6 +654,10 @@ GazeboOdriSimSystem::perform_command_mode_switch(
         this->dataPtr->joints_[j].joint_control_method |= VELOCITY;
       } else if (interface_name == this->dataPtr->joints_[j].if_name_effort) {
         this->dataPtr->joints_[j].joint_control_method |= EFFORT;
+      } else if (interface_name == this->dataPtr->joints_[j].if_name_gain_kp ||
+                 interface_name == this->dataPtr->joints_[j].if_name_gain_kd) {
+        this->dataPtr->joints_[j].joint_control_method =
+            ControlMethod(POS_VEL_EFF_GAINS);
       }
     }
   }
@@ -661,7 +672,27 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
       continue;
     }
 
-    if (this->dataPtr->joints_[i].joint_control_method & VELOCITY) {
+    if (this->dataPtr->joints_[i].joint_control_method & POS_VEL_EFF_GAINS) {
+      // ODRI master board torque law:
+      // τ = τ_cmd + Kp * (pos_cmd - pos) + Kd * (vel_cmd - vel)
+      double pos_error = this->dataPtr->joints_[i].joint_position_cmd -
+                         this->dataPtr->joints_[i].joint_position;
+      double vel_error = this->dataPtr->joints_[i].joint_velocity_cmd -
+                         this->dataPtr->joints_[i].joint_velocity;
+      double torque = this->dataPtr->joints_[i].joint_effort_cmd +
+                      this->dataPtr->joints_[i].joint_Kp_cmd * pos_error +
+                      this->dataPtr->joints_[i].joint_Kd_cmd * vel_error;
+      auto forceCmd =
+          this->dataPtr->ecm->Component<sim::components::JointForceCmd>(
+              this->dataPtr->joints_[i].sim_joint);
+      if (forceCmd == nullptr) {
+        this->dataPtr->ecm->CreateComponent(
+            this->dataPtr->joints_[i].sim_joint,
+            sim::components::JointForceCmd({torque}));
+      } else {
+        *forceCmd = sim::components::JointForceCmd({torque});
+      }
+    } else if (this->dataPtr->joints_[i].joint_control_method & VELOCITY) {
       if (!this->dataPtr->ecm->Component<sim::components::JointVelocityCmd>(
               this->dataPtr->joints_[i].sim_joint)) {
         this->dataPtr->ecm->CreateComponent(
