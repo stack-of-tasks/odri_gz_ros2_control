@@ -108,8 +108,23 @@ ament_target_dependencies(ign_ros2_control-system
 
 # Testing and linting
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  ament_add_gtest(test_odri_gz_system
+    test/test_odri_gz_system.cpp
+  )
+  target_include_directories(test_odri_gz_system PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  )
+  ament_target_dependencies(test_odri_gz_system
+    hardware_interface
+    rclcpp
+  )
+  target_link_libraries(test_odri_gz_system
+    gz-sim::gz-sim
+  )
 endif()
 
 # Export old-style CMake variables
