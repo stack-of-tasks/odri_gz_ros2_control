@@ -15,15 +15,9 @@
 #ifndef GZ_ROS2_CONTROL__GZ_ROS2_CONTROL_PLUGIN_HPP_
 #define GZ_ROS2_CONTROL__GZ_ROS2_CONTROL_PLUGIN_HPP_
 
-#include <memory>
-
-#ifdef GZ_HEADERS
 #include <gz/sim/System.hh>
+#include <memory>
 namespace sim = gz::sim;
-#else
-#include <ignition/gazebo/System.hh>
-namespace sim = ignition::gazebo;
-#endif
 
 namespace odri_gz_ros2_control {
 // Forward declarations.

@@ -15,18 +15,12 @@
 #ifndef GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
 #define GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
 
+#include <gz/sim/System.hh>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
-
-#ifdef GZ_HEADERS
-#include <gz/sim/System.hh>
 namespace sim = gz::sim;
-#else
-#include <ignition/gazebo/System.hh>
-namespace sim = ignition::gazebo;
-#endif
 
 #include <hardware_interface/system_interface.hpp>
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
@@ -102,7 +96,8 @@ class GazeboOdriSimSystemInterface
   virtual bool initSim(rclcpp::Node::SharedPtr& model_nh,
                        std::map<std::string, sim::Entity>& joints,
                        const hardware_interface::HardwareInfo& hardware_info,
-                       sim::EntityComponentManager& _ecm, int& update_rate) = 0;
+                       sim::EntityComponentManager& _ecm,
+                       unsigned int update_rate) = 0;
 
   // Methods used to control a joint.
   enum ControlMethod_ {
@@ -110,6 +105,7 @@ class GazeboOdriSimSystemInterface
     POSITION = (1 << 0),
     VELOCITY = (1 << 1),
     EFFORT = (1 << 2),
+    POS_VEL_EFF_GAINS = (1 << 3),
   };
 
   typedef SafeEnum<enum ControlMethod_> ControlMethod;

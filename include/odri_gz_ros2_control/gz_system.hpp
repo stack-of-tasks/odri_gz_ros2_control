@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "gz_ros2_control/gz_system_interface.hpp"
+#include "odri_gz_ros2_control/gz_system_interface.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 
@@ -31,7 +31,7 @@ using CallbackReturn =
 // Forward declaration
 class GazeboOdriSimSystemPrivate;
 
-// These class must inherit `gz_ros2_control::GazeboOdriSimSystemInterface`
+// These class must inherit `odri_gz_ros2_control::GazeboOdriSimSystemInterface`
 // which implements a simulated `ros2_control`
 // `hardware_interface::SystemInterface`.
 
@@ -77,12 +77,10 @@ class GazeboOdriSimSystem : public GazeboOdriSimSystemInterface {
   bool initSim(rclcpp::Node::SharedPtr& model_nh,
                std::map<std::string, sim::Entity>& joints,
                const hardware_interface::HardwareInfo& hardware_info,
-               sim::EntityComponentManager& _ecm, int& update_rate) override;
+               sim::EntityComponentManager& _ecm,
+               unsigned int update_rate) override;
 
  private:
-  // Register a sensor (for now just IMUs)
-  // \param[in] hardware_info hardware information where the data of
-  // the sensors is extract.
   void registerSensors(const hardware_interface::HardwareInfo& hardware_info);
 
   /// \brief Private data class
