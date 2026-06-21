@@ -33,10 +33,6 @@ add_library(${PROJECT_NAME}-system SHARED
   src/gz_ros2_control_plugin.cpp
 )
 
-if(NOT DEFINED ENV{GZ_VERSION} OR "$ENV{GZ_VERSION}" STREQUAL "harmonic")
-  target_compile_definitions(${PROJECT_NAME}-system PUBLIC GZ_SIM_8)
-endif()
-
 target_link_libraries(${PROJECT_NAME}-system
   "${GZ_SIM}::${GZ_SIM}"
   "${GZ_PLUGIN}::register"
@@ -62,10 +58,6 @@ ament_target_dependencies(gz_hardware_odri_plugins
   hardware_interface
   rclcpp
 )
-
-if(NOT DEFINED ENV{GZ_VERSION} OR "$ENV{GZ_VERSION}" STREQUAL "harmonic")
-  target_compile_definitions(gz_hardware_odri_plugins PUBLIC GZ_SIM_8)
-endif()
 
 target_link_libraries(gz_hardware_odri_plugins
   "${GZ_SIM}::${GZ_SIM}"

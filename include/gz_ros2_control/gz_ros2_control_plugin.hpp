@@ -17,13 +17,8 @@
 
 #include <memory>
 
-#ifdef GZ_SIM_8
 #include <gz/sim/System.hh>
 namespace sim = gz::sim;
-#else
-#include <ignition/gazebo/System.hh>
-namespace sim = ignition::gazebo;
-#endif
 
 namespace odri_gz_ros2_control
 {

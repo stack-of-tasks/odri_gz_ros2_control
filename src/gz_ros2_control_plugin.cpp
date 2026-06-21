@@ -23,7 +23,6 @@
 #include <utility>
 #include <vector>
 
-#ifdef GZ_SIM_8
 #include <gz/plugin/Register.hh>
 #include <gz/sim/Model.hh>
 #include <gz/sim/components/Joint.hh>
@@ -31,15 +30,6 @@
 #include <gz/sim/components/Name.hh>
 #include <gz/sim/components/ParentEntity.hh>
 #include <gz/sim/components/World.hh>
-#else
-#include <ignition/gazebo/Model.hh>
-#include <ignition/gazebo/components/Joint.hh>
-#include <ignition/gazebo/components/JointType.hh>
-#include <ignition/gazebo/components/Name.hh>
-#include <ignition/gazebo/components/ParentEntity.hh>
-#include <ignition/gazebo/components/World.hh>
-#include <ignition/plugin/Register.hh>
-#endif
 
 #include <controller_manager/controller_manager.hpp>
 #include <hardware_interface/component_parser.hpp>
@@ -594,7 +584,6 @@ void GazeboOdriSimROS2ControlPlugin::PostUpdate(
 }
 }  // namespace odri_gz_ros2_control
 
-#ifdef GZ_SIM_8
 GZ_ADD_PLUGIN(
   odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin, gz::sim::System,
   odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemConfigure,
@@ -603,14 +592,3 @@ GZ_ADD_PLUGIN(
 GZ_ADD_PLUGIN_ALIAS(
   odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin,
   "ign_ros2_control::IgnitionROS2ControlPlugin")
-#else
-IGNITION_ADD_PLUGIN(
-  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin,
-  ignition::gazebo::System,
-  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemConfigure,
-  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPreUpdate,
-  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPostUpdate)
-IGNITION_ADD_PLUGIN_ALIAS(
-  odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin,
-  "ign_ros2_control::IgnitionROS2ControlPlugin")
-#endif
