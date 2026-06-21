@@ -5,7 +5,7 @@
   <description>Gazebo ros2_control package allows to control simulated robots using ros2_control framework (ODRI fork).</description>
   <maintainer email="olivier.stasse@laas.fr">Olivier Stasse</maintainer>
   <author>Alejandro Hernández</author>
-  <license>Apache 2</license>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
