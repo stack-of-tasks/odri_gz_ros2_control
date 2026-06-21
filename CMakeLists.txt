@@ -1,16 +1,7 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.22)
 set(CMAKE_VERBOSE_MAKEFILE True)
 
 project(odri_gz_ros2_control)
-
-# Default to C11
-if(NOT CMAKE_C_STANDARD)
-    set(CMAKE_C_STANDARD 11)
-endif()
-# Default to C++17
-if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 17)
-endif()
 
 # Compiler options
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -26,34 +17,15 @@ find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
-# Detects Ubuntu release
-find_program(LSB_RELEASE_EXEC lsb_release)
-execute_process(COMMAND ${LSB_RELEASE_EXEC} -c
-OUTPUT_VARIABLE LSB_RELEASE_CODENAME_PPREFIX
-OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-# Remove prefix Codename:
-string(REGEX REPLACE "Codename:\t" "" LSB_RELEASE_CODENAME ${LSB_RELEASE_CODENAME_PPREFIX})
-message(STATUS "LSB_RELEASE_CODENAME=${LSB_RELEASE_CODENAME}")
-
-if(${LSB_RELEASE_CODENAME} STREQUAL "jammy")
-  # If Jammy is detected uses Gazebo Fortress
-  find_package(ignition-gazebo6 REQUIRED)
-  set(GZ_SIM_VER ${ignition-gazebo6_VERSION_MAJOR})
-  message(STATUS "Compiling against Gazebo Fortress")
-  find_package(ignition-plugin1 REQUIRED)
-  set(GZ_PLUGIN_VER ${ignition-plugin1_VERSION_MAJOR})
-  set(GZ_PLUGIN ignition-plugin${GZ_PLUGIN_VER}::register)
-  set(GZ_SIM ignition-gazebo${GZ_SIM_VER}::core)
-elseif(${LSB_RELEASE_CODENAME} STREQUAL "noble")
-  # If Jammy is detected uses Harmonic
-  find_package(gz_sim_vendor)
-  find_package(gz-sim)
-
-  find_package(gz_plugin_vendor)
-  find_package(gz-plugin)
+if(NOT DEFINED ENV{GZ_VERSION} OR "$ENV{GZ_VERSION}" STREQUAL "harmonic")
+  set(GZ_SIM "gz-sim8")
+  set(GZ_PLUGIN "gz-plugin2")
+else()
+  message(FATAL_ERROR "Gazebo $ENV{GZ_VERSION} is not yet supported")
 endif()
+
+find_package("${GZ_SIM}" REQUIRED)
+find_package("${GZ_PLUGIN}" REQUIRED)
 
 include_directories(include)
 
@@ -61,19 +33,14 @@ add_library(${PROJECT_NAME}-system SHARED
   src/gz_ros2_control_plugin.cpp
 )
 
-if(${LSB_RELEASE_CODENAME} STREQUAL "jammy")
-target_link_libraries(${PROJECT_NAME}-system
-  ${GZ_SIM}
-  ${GZ_PLUGIN}
-)
-elseif(${LSB_RELEASE_CODENAME} STREQUAL "noble")
-message(STATUS "Add target ${PROJECT_NAME}-system using noble")
-target_compile_definitions(${PROJECT_NAME}-system PUBLIC GZ_SIM_8)
-target_link_libraries(${PROJECT_NAME}-system
-  gz-sim::gz-sim
-  gz-plugin::register
-)
+if(NOT DEFINED ENV{GZ_VERSION} OR "$ENV{GZ_VERSION}" STREQUAL "harmonic")
+  target_compile_definitions(${PROJECT_NAME}-system PUBLIC GZ_SIM_8)
 endif()
+
+target_link_libraries(${PROJECT_NAME}-system
+  "${GZ_SIM}::${GZ_SIM}"
+  "${GZ_PLUGIN}::register"
+)
 
 ament_target_dependencies(${PROJECT_NAME}-system
   ament_index_cpp
@@ -96,16 +63,13 @@ ament_target_dependencies(gz_hardware_odri_plugins
   rclcpp
 )
 
-if(${LSB_RELEASE_CODENAME} STREQUAL "jammy")
-target_link_libraries(gz_hardware_odri_plugins
-  ${GZ_SIM}
-)
-elseif(${LSB_RELEASE_CODENAME} STREQUAL "noble")
-target_compile_definitions(gz_hardware_odri_plugins PUBLIC GZ_SIM_8)
-target_link_libraries(gz_hardware_odri_plugins
-  gz-sim::gz-sim
-)
+if(NOT DEFINED ENV{GZ_VERSION} OR "$ENV{GZ_VERSION}" STREQUAL "harmonic")
+  target_compile_definitions(gz_hardware_odri_plugins PUBLIC GZ_SIM_8)
 endif()
+
+target_link_libraries(gz_hardware_odri_plugins
+  "${GZ_SIM}::${GZ_SIM}"
+)
 
 ## Install
 install(TARGETS
