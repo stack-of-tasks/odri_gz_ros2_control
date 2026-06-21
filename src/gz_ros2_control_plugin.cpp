@@ -451,10 +451,10 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
   this->dataPtr->executor_->add_node(this->dataPtr->node_);
   this->dataPtr->stop_ = false;
   auto spin = [this]() {
-    while (rclcpp::ok() && !this->dataPtr->stop_) {
-      this->dataPtr->executor_->spin_once();
-    }
-  };
+      while (rclcpp::ok() && !this->dataPtr->stop_) {
+        this->dataPtr->executor_->spin_once();
+      }
+    };
   this->dataPtr->thread_executor_spin_ = std::thread(spin);
 
   RCLCPP_DEBUG_STREAM(

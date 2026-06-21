@@ -18,7 +18,6 @@
   ament-cmake-cpplint,
   ament-cmake-copyright,
   ament-cmake-lint-cmake,
-  ament-cmake-uncrustify,
   ament-cmake-xmllint,
   ament-cpplint,
   ament-cppcheck,
@@ -26,7 +25,6 @@
   ament-lint-auto,
   ament-lint-cmake,
   ament-lint-common,
-  ament-uncrustify,
   ament-xmllint,
 }:
 buildRosPackage {
@@ -74,7 +72,6 @@ buildRosPackage {
     ament-cmake-cppcheck
     ament-cmake-cpplint
     ament-cmake-lint-cmake
-    ament-cmake-uncrustify
     ament-cmake-xmllint
     ament-lint-auto
     ament-lint-common
@@ -86,7 +83,6 @@ buildRosPackage {
     ament-cppcheck
     ament-cpplint
     ament-lint-cmake
-    ament-uncrustify
     ament-xmllint
     # keep-sorted end
   ];
