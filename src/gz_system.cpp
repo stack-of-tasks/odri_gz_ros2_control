@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "gz_ros2_control/gz_system.hpp"
+#include <gz/msgs/imu.pb.h>
 
 #include <limits>
 #include <map>
@@ -21,7 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include <gz/msgs/imu.pb.h>
 
 #include <gz/sim/components/AngularVelocity.hh>
 #include <gz/sim/components/Imu.hh>
