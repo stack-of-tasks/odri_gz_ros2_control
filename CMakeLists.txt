@@ -94,15 +94,15 @@ install(EXPORT export_${PROJECT_NAME}
 
 #########
 
-add_library(gz_ros2_control-system SHARED
+add_library(ign_ros2_control-system SHARED
   src/gz_ros2_control_plugin.cpp
 )
 
-target_link_libraries(gz_ros2_control-system
+target_link_libraries(ign_ros2_control-system
   "${GZ_SIM}::${GZ_SIM}"
   "${GZ_PLUGIN}::register"
 )
-ament_target_dependencies(gz_ros2_control-system
+ament_target_dependencies(ign_ros2_control-system
   controller_manager
   hardware_interface
   pluginlib
@@ -136,7 +136,7 @@ endif()
 # Export old-style CMake variables
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME}-system gz_hardware_odri_plugins)
-ament_export_libraries(gz_ros2_control-system gz_hardware_odri_plugins)
+ament_export_libraries(ign_ros2_control-system gz_hardware_odri_plugins)
 
 # Export modern CMake targets
 ament_export_targets(export_${PROJECT_NAME})
@@ -146,7 +146,7 @@ ament_export_dependencies(
   hardware_interface
 )
 
-install(TARGETS gz_ros2_control-system
+install(TARGETS ign_ros2_control-system
   DESTINATION lib
 )
 
