@@ -4,33 +4,35 @@
   <version>1.2.2</version>
   <description>Gazebo ros2_control package allows to control simulated robots using ros2_control framework (ODRI fork).</description>
   <maintainer email="olivier.stasse@laas.fr">Olivier Stasse</maintainer>
-  <author>Alejandro Hernández</author>
-  <license>Apache 2</license>
+  <author>Olivier Stasse</author>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>ament_index_cpp</depend>
-  <!-- default version to use in official ROS2 packages is GAzebo Fortress for ROS2 Rolling -->
-  <depend condition="$GZ_VERSION == ''">gz_sim_vendor</depend>
-  <depend condition="$GZ_VERSION == fortress">ignition-gazebo6</depend>
-  <depend condition="$GZ_VERSION == garden">gz_sim_vendor</depend>
-  <depend condition="$GZ_VERSION == harmonic">gz_sim_vendor</depend>
-
-  <depend condition="$GZ_VERSION == ''">gz_plugin_vendor</depend>
-  <depend condition="$GZ_VERSION == fortress">ignition-plugin</depend>
-  <depend condition="$GZ_VERSION == garden">gz_plugin_vendor</depend>
-  <depend condition="$GZ_VERSION == harmonic">gz_plugin_vendor</depend>
+  <!-- keep-sorted start -->
+  <depend>controller_manager</depend>
+  <depend>gz_plugin_vendor</depend>
+  <depend>gz_sim_vendor</depend>
+  <depend>hardware_interface</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
-  <depend>yaml_cpp_vendor</depend>
   <depend>rclcpp_lifecycle</depend>
-  <depend>hardware_interface</depend>
-  <depend>controller_manager</depend>
+  <depend>ros2_control_cmake</depend>
+  <depend>yaml_cpp_vendor</depend>
+  <!-- keep-sorted end -->
 
+  <!-- keep-sorted start -->
+  <test_depend>ament_cmake_copyright</test_depend>
+  <test_depend>ament_cmake_cppcheck</test_depend>
+  <test_depend>ament_cmake_cpplint</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_cmake_lint_cmake</test_depend>
+  <test_depend>ament_cmake_xmllint</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+  <!-- keep-sorted end -->
 
   <export>
-      <build_type>ament_cmake</build_type>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

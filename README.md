@@ -20,9 +20,7 @@ colcon build --packages-select odri_gz_ros2_control
 The package follows the compatibility matrix specified [here](https://gazebosim.org/docs/latest/ros_installation/)
 
 Then the target is to  try to maintain this package for:
-- Humble (LTS) - GZ Fortress
 - Jazzy (LTS) - GZ Harmonic
-- Rolling on Jammy (22.04) / Noble (24.04)
 
 # Branches
 
