@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
-#define GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
+#ifndef ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
+#define ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
 
-#include <gz/sim/System.hh>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
+#include <gz/sim/System.hh>
 namespace sim = gz::sim;
 
 #include <hardware_interface/system_interface.hpp>
@@ -46,7 +46,7 @@ namespace odri_gz_ros2_control {
 /// foo & VELOCITY -> False  // Check if velocity is active in the flag
 
 template <class ENUM,
-          class UNDERLYING = typename std::underlying_type<ENUM>::type>
+class UNDERLYING = typename std::underlying_type<ENUM>::type>
 class SafeEnum {
  public:
   SafeEnum() : mFlags(0) {}
@@ -116,4 +116,4 @@ class GazeboOdriSimSystemInterface
 
 }  // namespace odri_gz_ros2_control
 
-#endif  // GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
+#endif  // ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_

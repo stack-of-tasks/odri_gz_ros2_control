@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GZ_ROS2_CONTROL__GZ_SYSTEM_HPP_
-#define GZ_ROS2_CONTROL__GZ_SYSTEM_HPP_
+#ifndef ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_HPP_
+#define ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_HPP_
 
 #include <map>
 #include <memory>
@@ -26,7 +26,7 @@
 
 namespace odri_gz_ros2_control {
 using CallbackReturn =
-    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
+rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
 // Forward declaration
 class GazeboOdriSimSystemPrivate;
@@ -89,4 +89,4 @@ class GazeboOdriSimSystem : public GazeboOdriSimSystemInterface {
 
 }  // namespace odri_gz_ros2_control
 
-#endif  // GZ_ROS2_CONTROL__GZ_SYSTEM_HPP_
+#endif  // ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_HPP_

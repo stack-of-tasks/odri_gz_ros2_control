@@ -17,15 +17,16 @@
 #include <gz/msgs/imu.pb.h>
 #include <gz/msgs/wrench.pb.h>
 
-// String constants matching
-// ros2_hardware_interface_odri/system_interface_odri.hpp
-namespace ros2_control_odri {
-constexpr const char *HW_IF_GAIN_KP = "gain_kp";
-constexpr const char *HW_IF_GAIN_KD = "gain_kd";
-}  // namespace ros2_control_odri
-
 #include <array>
 #include <cstddef>
+#include <limits>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include <gz/physics/Geometry.hh>
 #include <gz/sim/components/AngularVelocity.hh>
 #include <gz/sim/components/ForceTorque.hh>
@@ -48,13 +49,14 @@ constexpr const char *HW_IF_GAIN_KD = "gain_kd";
 #include <hardware_interface/hardware_info.hpp>
 #include <hardware_interface/lexical_casts.hpp>
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
-#include <limits>
-#include <map>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
+
+
+// String constants matching
+// ros2_hardware_interface_odri/system_interface_odri.hpp
+namespace ros2_control_odri {
+constexpr const char *HW_IF_GAIN_KP = "gain_kp";
+constexpr const char *HW_IF_GAIN_KD = "gain_kd";
+}  // namespace ros2_control_odri
 
 struct jointData {
   std::string name;

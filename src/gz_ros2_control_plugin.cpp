@@ -15,6 +15,14 @@
 #include "odri_gz_ros2_control/gz_ros2_control_plugin.hpp"
 
 #include <chrono>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
+
 #include <controller_manager/controller_manager.hpp>
 #include <gz/plugin/Register.hh>
 #include <gz/sim/Model.hh>
@@ -26,15 +34,8 @@
 #include <hardware_interface/component_parser.hpp>
 #include <hardware_interface/resource_manager.hpp>
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
-#include <map>
-#include <memory>
-#include <mutex>
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <string>
-#include <thread>
-#include <utility>
-#include <vector>
 
 #include "odri_gz_ros2_control/gz_system.hpp"
 
