@@ -129,7 +129,7 @@ if(BUILD_TESTING)
     rclcpp
   )
   target_link_libraries(test_odri_gz_system
-    gz-sim::gz-sim
+    "${GZ_SIM}::${GZ_SIM}"
   )
 endif()
 
