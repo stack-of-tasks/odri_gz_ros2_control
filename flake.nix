@@ -24,6 +24,7 @@
                 ./include
                 ./package.xml
                 ./src
+                ./test
               ];
             };
           };
