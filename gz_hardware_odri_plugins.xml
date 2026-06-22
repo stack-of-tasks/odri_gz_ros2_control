@@ -12,7 +12,8 @@
      type="odri_gz_ros2_control::GazeboOdriSimSystem"
      base_class_type="odri_gz_ros2_control::GazeboOdriSimSystemInterface">
      <description>
-       GazeboPositionJoint
+       ros2 control hardware component to be loaede by the gazebo plugin.
+       For backward compatibility with old ign* plugin names
      </description>
    </class>
 

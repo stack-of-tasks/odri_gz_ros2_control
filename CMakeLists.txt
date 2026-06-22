@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
-set(CMAKE_VERBOSE_MAKEFILE True)
-
 project(odri_gz_ros2_control)
+
+find_package(ros2_control_cmake REQUIRED)
+set_compiler_options()
+export_windows_symbols()
 
 # Compiler options
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -10,11 +12,11 @@ endif()
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(ament_index_cpp REQUIRED)
 find_package(controller_manager REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
 if(NOT DEFINED ENV{GZ_VERSION} OR "$ENV{GZ_VERSION}" STREQUAL "harmonic")
@@ -29,9 +31,13 @@ find_package("${GZ_PLUGIN}" REQUIRED)
 
 include_directories(include)
 
+#########
+
 add_library(${PROJECT_NAME}-system SHARED
   src/gz_ros2_control_plugin.cpp
 )
+
+add_library(${PROJECT_NAME}-system::${PROJECT_NAME}-system ALIAS ${PROJECT_NAME}-system)
 
 target_link_libraries(${PROJECT_NAME}-system
   "${GZ_SIM}::${GZ_SIM}"
@@ -39,13 +45,17 @@ target_link_libraries(${PROJECT_NAME}-system
 )
 
 ament_target_dependencies(${PROJECT_NAME}-system
-  ament_index_cpp
   controller_manager
   hardware_interface
   pluginlib
   rclcpp
   yaml_cpp_vendor
   rclcpp_lifecycle
+)
+
+target_include_directories(${PROJECT_NAME}-system PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
 #########
@@ -58,36 +68,85 @@ ament_target_dependencies(gz_hardware_odri_plugins
   hardware_interface
   rclcpp
 )
-
 target_link_libraries(gz_hardware_odri_plugins
   "${GZ_SIM}::${GZ_SIM}"
 )
 
-## Install
+# Install headers (trailing slash installs contents, not the directory itself)
+install(DIRECTORY include/
+  DESTINATION include/${PROJECT_NAME}
+)
+
+# Install library and export targets
 install(TARGETS
+  ${PROJECT_NAME}-system
   gz_hardware_odri_plugins
+  EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY
-  include
-  DESTINATION include
+install(EXPORT export_${PROJECT_NAME}
+  NAMESPACE ${PROJECT_NAME}::
+  DESTINATION share/${PROJECT_NAME}/cmake
+)
+
+#########
+
+add_library(gz_ros2_control-system SHARED
+  src/gz_ros2_control_plugin.cpp
+)
+
+target_link_libraries(gz_ros2_control-system
+  "${GZ_SIM}::${GZ_SIM}"
+  "${GZ_PLUGIN}::register"
+)
+ament_target_dependencies(gz_ros2_control-system
+  controller_manager
+  hardware_interface
+  pluginlib
+  rclcpp
+  yaml_cpp_vendor
+  rclcpp_lifecycle
 )
 
 # Testing and linting
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_uncrustify)
   ament_lint_auto_find_test_dependencies()
+
+  ament_add_gtest(test_odri_gz_system
+    test/test_odri_gz_system.cpp
+  )
+  target_include_directories(test_odri_gz_system PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  )
+  ament_target_dependencies(test_odri_gz_system
+    hardware_interface
+    rclcpp
+  )
+  target_link_libraries(test_odri_gz_system
+    gz-sim::gz-sim
+  )
 endif()
 
+# Export old-style CMake variables
 ament_export_include_directories(include)
-ament_export_libraries(${PROJECT_NAME} gz_hardware_odri_plugins)
+ament_export_libraries(${PROJECT_NAME}-system gz_hardware_odri_plugins)
+ament_export_libraries(gz_ros2_control-system gz_hardware_odri_plugins)
 
-# Install directories
-install(TARGETS ${PROJECT_NAME}-system
+# Export modern CMake targets
+ament_export_targets(export_${PROJECT_NAME})
+
+ament_export_dependencies(
+  controller_manager
+  hardware_interface
+)
+
+install(TARGETS gz_ros2_control-system
   DESTINATION lib
 )
 
