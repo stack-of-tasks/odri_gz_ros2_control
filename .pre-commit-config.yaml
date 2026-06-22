@@ -15,7 +15,7 @@
 repos:
   # Standard hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -35,20 +35,20 @@ repos:
 
   # Python hooks
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.16.0
+    rev: v3.21.2
     hooks:
     -   id: pyupgrade
         args: [--py36-plus]
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.0
+    rev: 7.3.0
     hooks:
     - id: flake8
       args: ["--extend-ignore=E501"]
 
   # Docs - RestructuredText hooks
   - repo: https://github.com/PyCQA/doc8
-    rev: v1.1.1
+    rev: v2.0.0
     hooks:
       - id: doc8
         args: ['--max-line-length=100', '--ignore=D001']
@@ -65,14 +65,14 @@ repos:
   # Spellcheck in comments and docs
   # skipping of *.svg files is not working...
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.2
     hooks:
       - id: codespell
         args: ['--write-changes']
         exclude: CHANGELOG\.rst|\.(svg|pyc)$
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.6
+    rev: 0.37.3
     hooks:
       - id: check-github-workflows
         args: ["--verbose"]
