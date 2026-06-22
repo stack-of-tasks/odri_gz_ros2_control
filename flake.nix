@@ -10,18 +10,23 @@
       {
         rosDistros = [ "jazzy" ];
         rosShellDistro = "jazzy";
-        rosOverrideAttrs.odri-gz-ros2-control = {
-          src = lib.fileset.toSource {
-            root = ./.;
-            fileset = lib.fileset.unions [
-              ./CMakeLists.txt
-              ./gz_hardware_odri_plugins.xml
-              ./include
-              ./package.xml
-              ./src
+        rosOverrideAttrs.odri-gz-ros2-control =
+          { drv-prev, ros-final, ... }:
+          {
+            propagatedBuildInputs = drv-prev.propagatedBuildInputs ++ [
+              ros-final.ros2-control-cmake
             ];
+            src = lib.fileset.toSource {
+              root = ./.;
+              fileset = lib.fileset.unions [
+                ./CMakeLists.txt
+                ./gz_hardware_odri_plugins.xml
+                ./include
+                ./package.xml
+                ./src
+              ];
+            };
           };
-        };
       }
     );
 }
