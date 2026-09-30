@@ -52,6 +52,7 @@ class SafeEnum {
   SafeEnum() : mFlags(0) {}
   explicit SafeEnum(ENUM singleFlag) : mFlags(singleFlag) {}
   SafeEnum(const SafeEnum& original) : mFlags(original.mFlags) {}
+  SafeEnum& operator=(const SafeEnum& original) = default;
 
   SafeEnum& operator|=(ENUM addValue) {
     mFlags |= addValue;

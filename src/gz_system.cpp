@@ -513,12 +513,12 @@ void GazeboOdriSimSystem::registerSensors(
 }
 
 CallbackReturn GazeboOdriSimSystem::on_init(
-    const hardware_interface::HardwareInfo &actuator_info) {
-  if (hardware_interface::SystemInterface::on_init(actuator_info) !=
+    const hardware_interface::HardwareComponentInterfaceParams & params) {
+  if (hardware_interface::SystemInterface::on_init(params) !=
       CallbackReturn::SUCCESS) {
     return CallbackReturn::ERROR;
   }
-  if (actuator_info.hardware_plugin_name !=
+  if (params.hardware_info.hardware_plugin_name !=
       "odri_gz_ros2_control/GazeboOdriSimSystem") {
     RCLCPP_WARN(this->nh_->get_logger(),
                 "The plugin name in <hardware><plugin> should be "
@@ -645,7 +645,8 @@ GazeboOdriSimSystem::perform_command_mode_switch(
           interface_name == this->dataPtr->joints_[j].if_name_effort ||
           interface_name == this->dataPtr->joints_[j].if_name_gain_kp ||
           interface_name == this->dataPtr->joints_[j].if_name_gain_kd) {
-        this->dataPtr->joints_[j].joint_control_method = ControlMethod(NONE);
+        this->dataPtr->joints_[j].joint_control_method =
+            odri_gz_ros2_control::GazeboOdriSimSystemInterface::ControlMethod(NONE);
       }
     }
 
@@ -659,7 +660,7 @@ GazeboOdriSimSystem::perform_command_mode_switch(
       } else if (interface_name == this->dataPtr->joints_[j].if_name_gain_kp ||
                  interface_name == this->dataPtr->joints_[j].if_name_gain_kd) {
         this->dataPtr->joints_[j].joint_control_method =
-            ControlMethod(POS_VEL_EFF_GAINS);
+            odri_gz_ros2_control::GazeboOdriSimSystemInterface::ControlMethod(POS_VEL_EFF_GAINS);
       }
     }
   }
@@ -673,14 +674,44 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
     if (this->dataPtr->joints_[i].sim_joint == sim::kNullEntity) {
       continue;
     }
+    RCLCPP_DEBUG_STREAM(this->nh_->get_logger(), "joint name: "
+                       << this->dataPtr->joints_[i].name << " " <<
+                       "pd: " <<
+                       this->dataPtr->joints_[i].joint_position_cmd << " vd:" <<
+                       this->dataPtr->joints_[i].joint_velocity_cmd << " ed:"<<
+                       this->dataPtr->joints_[i].joint_effort_cmd << " Kpd:"<<
+                       this->dataPtr->joints_[i].joint_Kp_cmd << " Kdd:"<<
+                       this->dataPtr->joints_[i].joint_Kd_cmd << " jp:"<<
+                       this->dataPtr->joints_[i].joint_position << " jv:"<<
+                       this->dataPtr->joints_[i].joint_velocity
+                       );
 
     if (this->dataPtr->joints_[i].joint_control_method & POS_VEL_EFF_GAINS) {
       // ODRI master board torque law:
       // τ = τ_cmd + Kp * (pos_cmd - pos) + Kd * (vel_cmd - vel)
-      double pos_error = this->dataPtr->joints_[i].joint_position_cmd -
-                         this->dataPtr->joints_[i].joint_position;
-      double vel_error = this->dataPtr->joints_[i].joint_velocity_cmd -
-                         this->dataPtr->joints_[i].joint_velocity;
+      // The board closes this PD loop locally at a high rate, so use the
+      // current simulator state rather than joint_position/joint_velocity,
+      // which read() only refreshes at the controller_manager update rate.
+      // Holding the state for a whole control period makes stiff gains
+      // oscillate around the setpoint.
+      double position = this->dataPtr->joints_[i].joint_position;
+      double velocity = this->dataPtr->joints_[i].joint_velocity;
+      const auto *simPosition =
+          this->dataPtr->ecm->Component<sim::components::JointPosition>(
+              this->dataPtr->joints_[i].sim_joint);
+      const auto *simVelocity =
+          this->dataPtr->ecm->Component<sim::components::JointVelocity>(
+              this->dataPtr->joints_[i].sim_joint);
+      if (simPosition && !simPosition->Data().empty()) {
+        position = simPosition->Data()[0];
+      }
+      if (simVelocity && !simVelocity->Data().empty()) {
+        velocity = simVelocity->Data()[0];
+      }
+      double pos_error =
+          this->dataPtr->joints_[i].joint_position_cmd - position;
+      double vel_error =
+          this->dataPtr->joints_[i].joint_velocity_cmd - velocity;
       double torque = this->dataPtr->joints_[i].joint_effort_cmd +
                       this->dataPtr->joints_[i].joint_Kp_cmd * pos_error +
                       this->dataPtr->joints_[i].joint_Kd_cmd * vel_error;
