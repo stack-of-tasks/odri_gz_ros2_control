@@ -463,5 +463,3 @@ GZ_ADD_PLUGIN(
     odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemConfigure,
     odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPreUpdate,
     odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPostUpdate)
-GZ_ADD_PLUGIN_ALIAS(odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin,
-                    "ign_ros2_control::IgnitionROS2ControlPlugin")
