@@ -18,6 +18,7 @@
 #include <gz/msgs/wrench.pb.h>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <limits>
 #include <map>
@@ -27,10 +28,14 @@
 #include <utility>
 #include <vector>
 
+#include <gz/math/Matrix3.hh>
+#include <gz/math/Pose3.hh>
 #include <gz/physics/Geometry.hh>
 #include <gz/sim/components/AngularVelocity.hh>
+#include <gz/sim/components/ChildLinkName.hh>
 #include <gz/sim/components/ForceTorque.hh>
 #include <gz/sim/components/Imu.hh>
+#include <gz/sim/components/Inertial.hh>
 #include <gz/sim/components/JointAxis.hh>
 #include <gz/sim/components/JointForceCmd.hh>
 #include <gz/sim/components/JointPosition.hh>
@@ -41,6 +46,7 @@
 #include <gz/sim/components/JointVelocityCmd.hh>
 #include <gz/sim/components/JointVelocityReset.hh>
 #include <gz/sim/components/LinearAcceleration.hh>
+#include <gz/sim/components/Link.hh>
 #include <gz/sim/components/Name.hh>
 #include <gz/sim/components/ParentEntity.hh>
 #include <gz/sim/components/Pose.hh>
@@ -73,6 +79,10 @@ struct jointData {
   double joint_Kp_cmd;
   double joint_Kd_cmd;
   bool is_actuated;
+  // Inertia of the joint's child link about the joint axis, a lower bound of
+  // the inertia seen by the joint. Used to make the damping term of the ODRI
+  // torque law implicit; 0 when unknown (explicit law).
+  double damping_inertia = 0.0;
   sim::Entity sim_joint;
   odri_gz_ros2_control::GazeboOdriSimSystemInterface::ControlMethod
       joint_control_method;
@@ -139,7 +149,45 @@ class odri_gz_ros2_control::GazeboOdriSimSystemPrivate {
   gz::transport::Node node;
   bool hold_joints_ = true;
   double position_proportional_gain_ = 0.1;
+  // Simulation time of the previous write(), to get the physics step.
+  rclcpp::Time last_write_time_;
+  bool has_last_write_time_ = false;
 };
+
+namespace {
+
+// Inertia of the child link of a revolute joint about the joint axis:
+// a^T I_com a + m |r_perp|^2, with every quantity in the child link frame.
+// Returns 0 if the information is not available.
+double ChildInertiaAboutAxis(const sim::EntityComponentManager &_ecm,
+                             sim::Entity _joint) {
+  const auto *childName =
+      _ecm.Component<sim::components::ChildLinkName>(_joint);
+  const auto *model = _ecm.Component<sim::components::ParentEntity>(_joint);
+  const auto *axis = _ecm.Component<sim::components::JointAxis>(_joint);
+  const auto *jointPose = _ecm.Component<sim::components::Pose>(_joint);
+  if (!childName || !model || !axis || !jointPose) return 0.0;
+
+  const sim::Entity link = _ecm.EntityByComponents(
+      sim::components::Link(), sim::components::Name(childName->Data()),
+      sim::components::ParentEntity(model->Data()));
+  const auto *inertial = _ecm.Component<sim::components::Inertial>(link);
+  if (link == sim::kNullEntity || !inertial) return 0.0;
+
+  // The joint pose is expressed in the child link frame, and gz-sim stores
+  // the axis resolved in the joint frame.
+  const gz::math::Vector3d a =
+      jointPose->Data().Rot().RotateVector(axis->Data().Xyz()).Normalized();
+  const gz::math::Pose3d &comPose = inertial->Data().Pose();
+  const gz::math::Matrix3d rot(comPose.Rot());
+  const gz::math::Matrix3d moi =
+      rot * inertial->Data().MassMatrix().Moi() * rot.Transposed();
+  const gz::math::Vector3d r = comPose.Pos() - jointPose->Data().Pos();
+  const double m = inertial->Data().MassMatrix().Mass();
+  return a.Dot(moi * a) + m * (r.SquaredLength() - std::pow(r.Dot(a), 2));
+}
+
+}  // namespace
 
 namespace odri_gz_ros2_control {
 
@@ -206,6 +254,11 @@ bool GazeboOdriSimSystem::initSim(
         _ecm.Component<sim::components::JointType>(simjoint)->Data();
     this->dataPtr->joints_[j].joint_axis =
         _ecm.Component<sim::components::JointAxis>(simjoint)->Data();
+    if (this->dataPtr->joints_[j].joint_type == sdf::JointType::REVOLUTE ||
+        this->dataPtr->joints_[j].joint_type == sdf::JointType::CONTINUOUS) {
+      this->dataPtr->joints_[j].damping_inertia =
+          ChildInertiaAboutAxis(_ecm, simjoint);
+    }
 
     // Create joint position component if one doesn't exist
     if (!_ecm.EntityHasComponentType(
@@ -225,8 +278,11 @@ bool GazeboOdriSimSystem::initSim(
       _ecm.CreateComponent(simjoint, sim::components::JointTransmittedWrench());
     }
 
-    RCLCPP_INFO_STREAM(this->nh_->get_logger(),
-                       "Loading joint: " << joint_name);
+    RCLCPP_INFO_STREAM(
+        this->nh_->get_logger(),
+        "Loading joint: " << joint_name << " (damping inertia "
+                          << this->dataPtr->joints_[j].damping_inertia
+                          << " kg.m^2)");
 
     // Precompute interface name strings to avoid allocations in
     // perform_command_mode_switch
@@ -669,7 +725,16 @@ GazeboOdriSimSystem::perform_command_mode_switch(
 }
 
 hardware_interface::return_type GazeboOdriSimSystem::write(
-    const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) {
+    const rclcpp::Time &time, const rclcpp::Duration & /*period*/) {
+  // write() runs at every physics step, so the time since the previous call
+  // is the physics step.
+  double step = 0.0;
+  if (this->dataPtr->has_last_write_time_) {
+    step = (time - this->dataPtr->last_write_time_).seconds();
+  }
+  this->dataPtr->last_write_time_ = time;
+  this->dataPtr->has_last_write_time_ = true;
+
   for (unsigned int i = 0; i < this->dataPtr->joints_.size(); ++i) {
     if (this->dataPtr->joints_[i].sim_joint == sim::kNullEntity) {
       continue;
@@ -712,9 +777,21 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
           this->dataPtr->joints_[i].joint_position_cmd - position;
       double vel_error =
           this->dataPtr->joints_[i].joint_velocity_cmd - velocity;
+      // Applied explicitly over a physics step, the damping term is unstable
+      // as soon as Kd * step / I > 2, I being the inertia seen by the joint
+      // (about 1e-5 kg.m^2 on the testbed, so Kd > ~0.015 at 1 ms). Make it
+      // implicit instead, Kd * (vel_cmd - vel_next) with vel_next predicted
+      // from the child link inertia, a lower bound of I: the scheme is then
+      // stable for any Kd. The effort and Kp terms are unchanged, so static
+      // equilibria are exact.
+      double damping = this->dataPtr->joints_[i].joint_Kd_cmd;
+      const double inertia = this->dataPtr->joints_[i].damping_inertia;
+      if (inertia > 0.0 && step > 0.0 && damping > 0.0) {
+        damping /= 1.0 + damping * step / inertia;
+      }
       double torque = this->dataPtr->joints_[i].joint_effort_cmd +
                       this->dataPtr->joints_[i].joint_Kp_cmd * pos_error +
-                      this->dataPtr->joints_[i].joint_Kd_cmd * vel_error;
+                      damping * vel_error;
       auto forceCmd =
           this->dataPtr->ecm->Component<sim::components::JointForceCmd>(
               this->dataPtr->joints_[i].sim_joint);
