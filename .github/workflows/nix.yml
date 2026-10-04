@@ -18,7 +18,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04]
-        # build: ["humble", "jazzy", "kilted", "rolling"]
         build: ["jazzy"]
     steps:
       - uses: actions/checkout@v7

@@ -20,10 +20,10 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
 if(NOT DEFINED ENV{GZ_VERSION} OR "$ENV{GZ_VERSION}" STREQUAL "harmonic")
-  set(GZ_SIM "gz-sim8")
-  set(GZ_PLUGIN "gz-plugin2")
+    set(GZ_SIM "gz-sim8")
+    set(GZ_PLUGIN "gz-plugin2")
 else()
-  message(FATAL_ERROR "Gazebo $ENV{GZ_VERSION} is not yet supported")
+    message(FATAL_ERROR "Gazebo $ENV{GZ_VERSION} is not yet supported")
 endif()
 
 find_package("${GZ_SIM}" REQUIRED)
@@ -33,15 +33,17 @@ include_directories(include)
 
 #########
 
-add_library(${PROJECT_NAME}-system SHARED
-  src/gz_ros2_control_plugin.cpp
+add_library(${PROJECT_NAME}-system SHARED src/gz_ros2_control_plugin.cpp)
+
+add_library(
+    ${PROJECT_NAME}-system::${PROJECT_NAME}-system
+    ALIAS ${PROJECT_NAME}-system
 )
 
-add_library(${PROJECT_NAME}-system::${PROJECT_NAME}-system ALIAS ${PROJECT_NAME}-system)
-
-target_link_libraries(${PROJECT_NAME}-system
-  "${GZ_SIM}::${GZ_SIM}"
-  "${GZ_PLUGIN}::register"
+target_link_libraries(
+    ${PROJECT_NAME}-system
+    "${GZ_SIM}::${GZ_SIM}"
+    "${GZ_PLUGIN}::register"
 )
 
 ament_target_dependencies(${PROJECT_NAME}-system
@@ -53,65 +55,60 @@ ament_target_dependencies(${PROJECT_NAME}-system
   rclcpp_lifecycle
 )
 
-target_include_directories(${PROJECT_NAME}-system PUBLIC
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+target_include_directories(
+    ${PROJECT_NAME}-system
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
 #########
 
-add_library(gz_hardware_odri_plugins SHARED
-  src/gz_system.cpp
-)
+add_library(gz_hardware_odri_plugins SHARED src/gz_system.cpp)
 ament_target_dependencies(gz_hardware_odri_plugins
   rclcpp_lifecycle
   hardware_interface
   rclcpp
 )
-target_link_libraries(gz_hardware_odri_plugins
-  "${GZ_SIM}::${GZ_SIM}"
-)
+target_link_libraries(gz_hardware_odri_plugins "${GZ_SIM}::${GZ_SIM}")
 
 # Install headers (trailing slash installs contents, not the directory itself)
-install(DIRECTORY include/
-  DESTINATION include/${PROJECT_NAME}
-)
+install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 
 # Install library and export targets
-install(TARGETS
-  ${PROJECT_NAME}-system
-  gz_hardware_odri_plugins
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+install(
+    TARGETS ${PROJECT_NAME}-system gz_hardware_odri_plugins
+    EXPORT export_${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
 )
 
-install(EXPORT export_${PROJECT_NAME}
-  NAMESPACE ${PROJECT_NAME}::
-  DESTINATION share/${PROJECT_NAME}/cmake
+install(
+    EXPORT export_${PROJECT_NAME}
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION share/${PROJECT_NAME}/cmake
 )
 
 # Testing and linting
 if(BUILD_TESTING)
-  find_package(ament_cmake_gtest REQUIRED)
-  find_package(ament_lint_auto REQUIRED)
-  list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_uncrustify)
-  ament_lint_auto_find_test_dependencies()
+    find_package(ament_cmake_gtest REQUIRED)
+    find_package(ament_lint_auto REQUIRED)
+    list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_uncrustify)
+    ament_lint_auto_find_test_dependencies()
 
-  ament_add_gtest(test_odri_gz_system
-    test/test_odri_gz_system.cpp
-  )
-  target_include_directories(test_odri_gz_system PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-  )
-  ament_target_dependencies(test_odri_gz_system
-    hardware_interface
-    rclcpp
-  )
-  target_link_libraries(test_odri_gz_system
-    "${GZ_SIM}::${GZ_SIM}"
-  )
+    ament_add_gtest(test_odri_gz_system
+      test/test_odri_gz_system.cpp
+    )
+    target_include_directories(
+        test_odri_gz_system
+        PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    )
+    ament_target_dependencies(test_odri_gz_system
+      hardware_interface
+      rclcpp
+    )
+    target_link_libraries(test_odri_gz_system "${GZ_SIM}::${GZ_SIM}")
 endif()
 
 # Export old-style CMake variables

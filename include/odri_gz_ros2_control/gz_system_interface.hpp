@@ -19,7 +19,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+// other
 #include <gz/sim/System.hh>
+
 namespace sim = gz::sim;
 
 #include <hardware_interface/system_interface.hpp>
@@ -46,7 +48,7 @@ namespace odri_gz_ros2_control {
 /// foo & VELOCITY -> False  // Check if velocity is active in the flag
 
 template <class ENUM,
-class UNDERLYING = typename std::underlying_type<ENUM>::type>
+          class UNDERLYING = typename std::underlying_type<ENUM>::type>
 class SafeEnum {
  public:
   SafeEnum() : mFlags(0) {}

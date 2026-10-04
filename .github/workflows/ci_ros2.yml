@@ -7,11 +7,10 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         env:
           - {ROS_DISTRO: jazzy}
-          # - {ROS_DISTRO: kilted}
-          # - {ROS_DISTRO: rolling}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

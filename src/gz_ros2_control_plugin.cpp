@@ -22,7 +22,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
-
+// other
 #include <controller_manager/controller_manager.hpp>
 #include <gz/plugin/Register.hh>
 #include <gz/sim/Model.hh>
@@ -42,8 +42,8 @@
 namespace odri_gz_ros2_control {
 class GZResourceManager : public hardware_interface::ResourceManager {
  public:
-  GZResourceManager(rclcpp::Node::SharedPtr &node,
-                    sim::EntityComponentManager &ecm,
+  GZResourceManager(rclcpp::Node::SharedPtr& node,
+                    sim::EntityComponentManager& ecm,
                     std::map<std::string, sim::Entity> enabledJoints)
       : hardware_interface::ResourceManager(node->get_node_clock_interface(),
                                             node->get_node_logging_interface()),
@@ -55,18 +55,18 @@ class GZResourceManager : public hardware_interface::ResourceManager {
     enabledJoints_ = enabledJoints;
   }
 
-  GZResourceManager(const GZResourceManager &) = delete;
+  GZResourceManager(const GZResourceManager&) = delete;
 
   // Called from Controller Manager when robot description is initialized from
   // callback
-  bool load_and_initialize_components(const std::string &urdf,
+  bool load_and_initialize_components(const std::string& urdf,
                                       unsigned int update_rate) override {
     components_are_loaded_and_initialized_ = true;
 
     const auto hardware_info =
         hardware_interface::parse_control_resources_from_urdf(urdf);
 
-    for (const auto &individual_hardware_info : hardware_info) {
+    for (const auto& individual_hardware_info : hardware_info) {
       std::string robot_hw_sim_type_str_ =
           individual_hardware_info.hardware_plugin_name;
       RCLCPP_DEBUG(logger_, "Load hardware interface %s ...",
@@ -81,7 +81,7 @@ class GZResourceManager : public hardware_interface::ResourceManager {
             std::unique_ptr<odri_gz_ros2_control::GazeboOdriSimSystemInterface>(
                 gz_system_loader_.createUnmanagedInstance(
                     robot_hw_sim_type_str_));
-      } catch (pluginlib::PluginlibException &ex) {
+      } catch (pluginlib::PluginlibException& ex) {
         RCLCPP_ERROR(logger_,
                      "The plugin failed to load for some reason. Error: %s\n",
                      ex.what());
@@ -106,7 +106,7 @@ class GZResourceManager : public hardware_interface::ResourceManager {
 
  private:
   std::shared_ptr<rclcpp::Node> node_;
-  sim::EntityComponentManager *ecm_;
+  sim::EntityComponentManager* ecm_;
   std::map<std::string, sim::Entity> enabledJoints_;
 
   pluginlib::ClassLoader<odri_gz_ros2_control::GazeboOdriSimSystemInterface>
@@ -119,7 +119,7 @@ class GZResourceManager : public hardware_interface::ResourceManager {
 class GazeboOdriSimROS2ControlPluginPrivate {
  public:
   std::map<std::string, sim::Entity> GetEnabledJoints(
-      const sim::Entity &_entity, sim::EntityComponentManager &_ecm) const;
+      const sim::Entity& _entity, sim::EntityComponentManager& _ecm) const;
 
   sim::Entity entity_;
 
@@ -137,7 +137,7 @@ class GazeboOdriSimROS2ControlPluginPrivate {
   rclcpp::Time last_update_sim_time_ros_ =
       rclcpp::Time(static_cast<int64_t>(0), RCL_ROS_TIME);
 
-  sim::EntityComponentManager *ecm{nullptr};
+  sim::EntityComponentManager* ecm{nullptr};
 
   int update_rate;
 
@@ -147,17 +147,17 @@ class GazeboOdriSimROS2ControlPluginPrivate {
 //////////////////////////////////////////////////
 std::map<std::string, sim::Entity>
 GazeboOdriSimROS2ControlPluginPrivate::GetEnabledJoints(
-    const sim::Entity &_entity, sim::EntityComponentManager &_ecm) const {
+    const sim::Entity& _entity, sim::EntityComponentManager& _ecm) const {
   std::map<std::string, sim::Entity> output;
 
   auto jointEntities =
       _ecm.ChildrenByComponents(_entity, sim::components::Joint());
 
-  for (const auto &jointEntity : jointEntities) {
+  for (const auto& jointEntity : jointEntities) {
     const auto jointName =
         _ecm.Component<sim::components::Name>(jointEntity)->Data();
 
-    const auto *jointType =
+    const auto* jointType =
         _ecm.Component<sim::components::JointType>(jointEntity);
     switch (jointType->Data()) {
       case sdf::JointType::PRISMATIC:
@@ -210,8 +210,8 @@ GazeboOdriSimROS2ControlPlugin::~GazeboOdriSimROS2ControlPlugin() {
 
 //////////////////////////////////////////////////
 void GazeboOdriSimROS2ControlPlugin::Configure(
-    const sim::Entity &_entity, const std::shared_ptr<const sdf::Element> &_sdf,
-    sim::EntityComponentManager &_ecm, sim::EventManager &) {
+    const sim::Entity& _entity, const std::shared_ptr<const sdf::Element>& _sdf,
+    sim::EntityComponentManager& _ecm, sim::EventManager&) {
   rclcpp::Logger logger = rclcpp::get_logger("GazeboOdriSimROS2ControlPlugin");
 
   const auto model = sim::Model(_entity);
@@ -235,7 +235,7 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
 
   std::vector<std::string> arguments = {"--ros-args"};
 
-  auto sdfPtr = const_cast<sdf::Element *>(_sdf.get());
+  auto sdfPtr = const_cast<sdf::Element*>(_sdf.get());
 
   sdf::ElementPtr argument_sdf_param = sdfPtr->GetElement("parameters");
   while (argument_sdf_param) {
@@ -287,9 +287,9 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
     }
   }
 
-  std::vector<const char *> argv;
-  for (const auto &arg : arguments) {
-    argv.push_back(reinterpret_cast<const char *>(arg.data()));
+  std::vector<const char*> argv;
+  for (const auto& arg : arguments) {
+    argv.push_back(reinterpret_cast<const char*>(arg.data()));
   }
 
   if (!rclcpp::ok()) {
@@ -321,17 +321,17 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
   try {
     this->dataPtr->node_->declare_parameter(
         "hold_joints", rclcpp::ParameterValue(hold_joints));
-  } catch (const rclcpp::exceptions::ParameterAlreadyDeclaredException &e) {
+  } catch (const rclcpp::exceptions::ParameterAlreadyDeclaredException& e) {
     RCLCPP_ERROR(this->dataPtr->node_->get_logger(),
                  "Parameter 'hold_joints' has already been declared, %s",
                  e.what());
-  } catch (const rclcpp::exceptions::InvalidParametersException &e) {
+  } catch (const rclcpp::exceptions::InvalidParametersException& e) {
     RCLCPP_ERROR(this->dataPtr->node_->get_logger(),
                  "Parameter 'hold_joints' has invalid name, %s", e.what());
-  } catch (const rclcpp::exceptions::InvalidParameterValueException &e) {
+  } catch (const rclcpp::exceptions::InvalidParameterValueException& e) {
     RCLCPP_ERROR(this->dataPtr->node_->get_logger(),
                  "Parameter 'hold_joints' value is invalid, %s", e.what());
-  } catch (const rclcpp::exceptions::InvalidParameterTypeException &e) {
+  } catch (const rclcpp::exceptions::InvalidParameterTypeException& e) {
     RCLCPP_ERROR(this->dataPtr->node_->get_logger(),
                  "Parameter 'hold_joints' value has wrong type, %s", e.what());
   }
@@ -340,20 +340,20 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
     this->dataPtr->node_->declare_parameter(
         "position_proportional_gain",
         rclcpp::ParameterValue(position_proportional_gain));
-  } catch (const rclcpp::exceptions::ParameterAlreadyDeclaredException &e) {
+  } catch (const rclcpp::exceptions::ParameterAlreadyDeclaredException& e) {
     RCLCPP_ERROR(
         this->dataPtr->node_->get_logger(),
         "Parameter 'position_proportional_gain' has already been declared, %s",
         e.what());
-  } catch (const rclcpp::exceptions::InvalidParametersException &e) {
+  } catch (const rclcpp::exceptions::InvalidParametersException& e) {
     RCLCPP_ERROR(this->dataPtr->node_->get_logger(),
                  "Parameter 'position_proportional_gain' has invalid name, %s",
                  e.what());
-  } catch (const rclcpp::exceptions::InvalidParameterValueException &e) {
+  } catch (const rclcpp::exceptions::InvalidParameterValueException& e) {
     RCLCPP_ERROR(this->dataPtr->node_->get_logger(),
                  "Parameter 'position_proportional_gain' value is invalid, %s",
                  e.what());
-  } catch (const rclcpp::exceptions::InvalidParameterTypeException &e) {
+  } catch (const rclcpp::exceptions::InvalidParameterTypeException& e) {
     RCLCPP_ERROR(
         this->dataPtr->node_->get_logger(),
         "Parameter 'position_proportional_gain' value has wrong type, %s",
@@ -400,7 +400,7 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
 
 //////////////////////////////////////////////////
 void GazeboOdriSimROS2ControlPlugin::PreUpdate(
-    const sim::UpdateInfo &_info, sim::EntityComponentManager & /*_ecm*/) {
+    const sim::UpdateInfo& _info, sim::EntityComponentManager& /*_ecm*/) {
   if (!this->dataPtr->controller_manager_) {
     return;
   }
@@ -437,8 +437,7 @@ void GazeboOdriSimROS2ControlPlugin::PreUpdate(
 
 //////////////////////////////////////////////////
 void GazeboOdriSimROS2ControlPlugin::PostUpdate(
-    const sim::UpdateInfo &_info,
-    const sim::EntityComponentManager & /*_ecm*/) {
+    const sim::UpdateInfo& _info, const sim::EntityComponentManager& /*_ecm*/) {
   if (!this->dataPtr->controller_manager_) {
     return;
   }
