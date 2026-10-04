@@ -13,9 +13,6 @@
         rosOverrideAttrs.odri-gz-ros2-control =
           { drv-prev, ros-final, ... }:
           {
-            propagatedBuildInputs = drv-prev.propagatedBuildInputs ++ [
-              ros-final.ros2-control-cmake
-            ];
             src = lib.fileset.toSource {
               root = ./.;
               fileset = lib.fileset.unions [

@@ -15,8 +15,10 @@
 #ifndef ODRI_GZ_ROS2_CONTROL__GZ_ROS2_CONTROL_PLUGIN_HPP_
 #define ODRI_GZ_ROS2_CONTROL__GZ_ROS2_CONTROL_PLUGIN_HPP_
 
-#include <gz/sim/System.hh>
+// c++ system
 #include <memory>
+// other
+#include <gz/sim/System.hh>
 namespace sim = gz::sim;
 
 namespace odri_gz_ros2_control {

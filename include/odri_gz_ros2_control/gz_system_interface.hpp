@@ -15,11 +15,13 @@
 #ifndef ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
 #define ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
 
-#include <gz/sim/System.hh>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
+// other
+#include <gz/sim/System.hh>
+
 namespace sim = gz::sim;
 
 #include <hardware_interface/system_interface.hpp>
