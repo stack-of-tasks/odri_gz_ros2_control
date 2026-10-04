@@ -20,14 +20,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <limits>
-#include <map>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
 #include <gz/math/Matrix3.hh>
 #include <gz/math/Pose3.hh>
 #include <gz/physics/Geometry.hh>
@@ -55,13 +47,19 @@
 #include <hardware_interface/hardware_info.hpp>
 #include <hardware_interface/lexical_casts.hpp>
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
-
+#include <limits>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 // String constants matching
 // ros2_hardware_interface_odri/system_interface_odri.hpp
 namespace ros2_control_odri {
-constexpr const char *HW_IF_GAIN_KP = "gain_kp";
-constexpr const char *HW_IF_GAIN_KD = "gain_kd";
+constexpr const char* HW_IF_GAIN_KP = "gain_kp";
+constexpr const char* HW_IF_GAIN_KD = "gain_kd";
 }  // namespace ros2_control_odri
 
 struct jointData {
@@ -99,10 +97,10 @@ class ForceTorqueData {
   std::string topicName{};
   sim::Entity sim_ft_sensors_ = sim::kNullEntity;
   std::array<double, 6> ft_sensor_data_;
-  void OnForceTorque(const gz::msgs::Wrench &_msg);
+  void OnForceTorque(const gz::msgs::Wrench& _msg);
 };
 
-void ForceTorqueData::OnForceTorque(const gz::msgs::Wrench &_msg) {
+void ForceTorqueData::OnForceTorque(const gz::msgs::Wrench& _msg) {
   this->ft_sensor_data_[0] = _msg.force().x();
   this->ft_sensor_data_[1] = _msg.force().y();
   this->ft_sensor_data_[2] = _msg.force().z();
@@ -117,10 +115,10 @@ class ImuData {
   std::string topicName{};
   sim::Entity sim_imu_sensors_ = sim::kNullEntity;
   std::array<double, 10> imu_sensor_data_;
-  void OnIMU(const gz::msgs::IMU &_msg);
+  void OnIMU(const gz::msgs::IMU& _msg);
 };
 
-void ImuData::OnIMU(const gz::msgs::IMU &_msg) {
+void ImuData::OnIMU(const gz::msgs::IMU& _msg) {
   this->imu_sensor_data_[0] = _msg.orientation().x();
   this->imu_sensor_data_[1] = _msg.orientation().y();
   this->imu_sensor_data_[2] = _msg.orientation().z();
@@ -144,7 +142,7 @@ class odri_gz_ros2_control::GazeboOdriSimSystemPrivate {
   std::vector<std::shared_ptr<ForceTorqueData>> ft_sensors_;
   std::vector<hardware_interface::StateInterface> state_interfaces_;
   std::vector<hardware_interface::CommandInterface> command_interfaces_;
-  sim::EntityComponentManager *ecm;
+  sim::EntityComponentManager* ecm;
   unsigned int update_rate;
   gz::transport::Node node;
   bool hold_joints_ = true;
@@ -159,26 +157,26 @@ namespace {
 // Inertia of the child link of a revolute joint about the joint axis:
 // a^T I_com a + m |r_perp|^2, with every quantity in the child link frame.
 // Returns 0 if the information is not available.
-double ChildInertiaAboutAxis(const sim::EntityComponentManager &_ecm,
+double ChildInertiaAboutAxis(const sim::EntityComponentManager& _ecm,
                              sim::Entity _joint) {
-  const auto *childName =
+  const auto* childName =
       _ecm.Component<sim::components::ChildLinkName>(_joint);
-  const auto *model = _ecm.Component<sim::components::ParentEntity>(_joint);
-  const auto *axis = _ecm.Component<sim::components::JointAxis>(_joint);
-  const auto *jointPose = _ecm.Component<sim::components::Pose>(_joint);
+  const auto* model = _ecm.Component<sim::components::ParentEntity>(_joint);
+  const auto* axis = _ecm.Component<sim::components::JointAxis>(_joint);
+  const auto* jointPose = _ecm.Component<sim::components::Pose>(_joint);
   if (!childName || !model || !axis || !jointPose) return 0.0;
 
   const sim::Entity link = _ecm.EntityByComponents(
       sim::components::Link(), sim::components::Name(childName->Data()),
       sim::components::ParentEntity(model->Data()));
-  const auto *inertial = _ecm.Component<sim::components::Inertial>(link);
+  const auto* inertial = _ecm.Component<sim::components::Inertial>(link);
   if (link == sim::kNullEntity || !inertial) return 0.0;
 
   // The joint pose is expressed in the child link frame, and gz-sim stores
   // the axis resolved in the joint frame.
   const gz::math::Vector3d a =
       jointPose->Data().Rot().RotateVector(axis->Data().Xyz()).Normalized();
-  const gz::math::Pose3d &comPose = inertial->Data().Pose();
+  const gz::math::Pose3d& comPose = inertial->Data().Pose();
   const gz::math::Matrix3d rot(comPose.Rot());
   const gz::math::Matrix3d moi =
       rot * inertial->Data().MassMatrix().Moi() * rot.Transposed();
@@ -192,10 +190,10 @@ double ChildInertiaAboutAxis(const sim::EntityComponentManager &_ecm,
 namespace odri_gz_ros2_control {
 
 bool GazeboOdriSimSystem::initSim(
-    rclcpp::Node::SharedPtr &model_nh,
-    std::map<std::string, sim::Entity> &enableJoints,
-    const hardware_interface::HardwareInfo &hardware_info,
-    sim::EntityComponentManager &_ecm, unsigned int update_rate) {
+    rclcpp::Node::SharedPtr& model_nh,
+    std::map<std::string, sim::Entity>& enableJoints,
+    const hardware_interface::HardwareInfo& hardware_info,
+    sim::EntityComponentManager& _ecm, unsigned int update_rate) {
   this->dataPtr = std::make_unique<GazeboOdriSimSystemPrivate>();
   this->dataPtr->last_update_sim_time_ros_ = rclcpp::Time();
 
@@ -206,19 +204,19 @@ bool GazeboOdriSimSystem::initSim(
   try {
     this->dataPtr->hold_joints_ =
         this->nh_->get_parameter("hold_joints").as_bool();
-  } catch (rclcpp::exceptions::ParameterUninitializedException &ex) {
+  } catch (rclcpp::exceptions::ParameterUninitializedException& ex) {
     RCLCPP_ERROR(this->nh_->get_logger(),
                  "Parameter 'hold_joints' not initialized, with error %s",
                  ex.what());
     RCLCPP_WARN_STREAM(this->nh_->get_logger(),
                        "Using default value: " << this->dataPtr->hold_joints_);
-  } catch (rclcpp::exceptions::ParameterNotDeclaredException &ex) {
+  } catch (rclcpp::exceptions::ParameterNotDeclaredException& ex) {
     RCLCPP_ERROR(this->nh_->get_logger(),
                  "Parameter 'hold_joints' not declared, with error %s",
                  ex.what());
     RCLCPP_WARN_STREAM(this->nh_->get_logger(),
                        "Using default value: " << this->dataPtr->hold_joints_);
-  } catch (rclcpp::ParameterTypeException &ex) {
+  } catch (rclcpp::ParameterTypeException& ex) {
     RCLCPP_ERROR(this->nh_->get_logger(),
                  "Parameter 'hold_joints' has wrong type: %s", ex.what());
     RCLCPP_WARN_STREAM(this->nh_->get_logger(),
@@ -236,7 +234,7 @@ bool GazeboOdriSimSystem::initSim(
   }
 
   for (unsigned int j = 0; j < this->dataPtr->joints_.size(); j++) {
-    auto &joint_info = hardware_info.joints[j];
+    auto& joint_info = hardware_info.joints[j];
     std::string joint_name = this->dataPtr->joints_[j].name = joint_info.name;
 
     auto it_joint = enableJoints.find(joint_name);
@@ -300,7 +298,7 @@ bool GazeboOdriSimSystem::initSim(
     // Log if joint is a mimic joint
     auto it_mimic = std::find_if(hardware_info.mimic_joints.begin(),
                                  hardware_info.mimic_joints.end(),
-                                 [j](const hardware_interface::MimicJoint &mj) {
+                                 [j](const hardware_interface::MimicJoint& mj) {
                                    return mj.joint_index == j;
                                  });
     if (it_mimic != hardware_info.mimic_joints.end()) {
@@ -316,7 +314,7 @@ bool GazeboOdriSimSystem::initSim(
 
     auto get_initial_value =
         [this,
-         joint_name](const hardware_interface::InterfaceInfo &interface_info) {
+         joint_name](const hardware_interface::InterfaceInfo& interface_info) {
           double initial_value{0.0};
           if (!interface_info.initial_value.empty()) {
             try {
@@ -324,7 +322,7 @@ bool GazeboOdriSimSystem::initSim(
                   hardware_interface::stod(interface_info.initial_value);
               RCLCPP_INFO(this->nh_->get_logger(),
                           "\t\t\t found initial value: %f", initial_value);
-            } catch (std::invalid_argument &) {
+            } catch (std::invalid_argument&) {
               RCLCPP_ERROR_STREAM(this->nh_->get_logger(),
                                   "Failed converting initial_value string to "
                                   "real number for the joint "
@@ -460,12 +458,12 @@ bool GazeboOdriSimSystem::initSim(
 }
 
 void GazeboOdriSimSystem::registerSensors(
-    const hardware_interface::HardwareInfo &hardware_info) {
+    const hardware_interface::HardwareInfo& hardware_info) {
   // Build a name→ComponentInfo lookup map for O(1) per-sensor access
-  std::unordered_map<std::string, const hardware_interface::ComponentInfo *>
+  std::unordered_map<std::string, const hardware_interface::ComponentInfo*>
       sensor_map;
   sensor_map.reserve(hardware_info.sensors.size());
-  for (const auto &comp : hardware_info.sensors) {
+  for (const auto& comp : hardware_info.sensors) {
     sensor_map.emplace(comp.name, &comp);
   }
 
@@ -473,8 +471,8 @@ void GazeboOdriSimSystem::registerSensors(
                      "Number of sensors: " << hardware_info.sensors.size());
 
   this->dataPtr->ecm->Each<sim::components::Imu, sim::components::Name>(
-      [&](const sim::Entity &_entity, const sim::components::Imu *,
-          const sim::components::Name *_name) -> bool {
+      [&](const sim::Entity& _entity, const sim::components::Imu*,
+          const sim::components::Name* _name) -> bool {
         auto imuData = std::make_shared<ImuData>();
         RCLCPP_INFO_STREAM(this->nh_->get_logger(),
                            "Loading sensor: " << _name->Data());
@@ -499,7 +497,7 @@ void GazeboOdriSimSystem::registerSensors(
                                  << "' not found in hardware_info, skipping.");
           return true;
         }
-        const hardware_interface::ComponentInfo &component = *sensor_it->second;
+        const hardware_interface::ComponentInfo& component = *sensor_it->second;
 
         static const std::map<std::string, size_t> interface_name_map = {
             {"orientation.x", 0},         {"orientation.y", 1},
@@ -509,7 +507,7 @@ void GazeboOdriSimSystem::registerSensors(
             {"linear_acceleration.y", 8}, {"linear_acceleration.z", 9},
         };
 
-        for (const auto &state_interface : component.state_interfaces) {
+        for (const auto& state_interface : component.state_interfaces) {
           RCLCPP_INFO_STREAM(this->nh_->get_logger(),
                              "\t\t " << state_interface.name);
           size_t data_index = interface_name_map.at(state_interface.name);
@@ -522,8 +520,8 @@ void GazeboOdriSimSystem::registerSensors(
       });
 
   this->dataPtr->ecm->Each<sim::components::ForceTorque, sim::components::Name>(
-      [&](const sim::Entity &_entity, const sim::components::ForceTorque *,
-          const sim::components::Name *_name) -> bool {
+      [&](const sim::Entity& _entity, const sim::components::ForceTorque*,
+          const sim::components::Name* _name) -> bool {
         auto ftData = std::make_shared<ForceTorqueData>();
         RCLCPP_INFO_STREAM(this->nh_->get_logger(),
                            "Loading sensor: " << _name->Data());
@@ -548,14 +546,14 @@ void GazeboOdriSimSystem::registerSensors(
                                  << "' not found in hardware_info, skipping.");
           return true;
         }
-        const hardware_interface::ComponentInfo &component = *sensor_it->second;
+        const hardware_interface::ComponentInfo& component = *sensor_it->second;
 
         static const std::map<std::string, size_t> interface_name_map = {
             {"force.x", 0},  {"force.y", 1},  {"force.z", 2},
             {"torque.x", 3}, {"torque.y", 4}, {"torque.z", 5},
         };
 
-        for (const auto &state_interface : component.state_interfaces) {
+        for (const auto& state_interface : component.state_interfaces) {
           RCLCPP_INFO_STREAM(this->nh_->get_logger(),
                              "\t\t " << state_interface.name);
           size_t data_index = interface_name_map.at(state_interface.name);
@@ -569,7 +567,7 @@ void GazeboOdriSimSystem::registerSensors(
 }
 
 CallbackReturn GazeboOdriSimSystem::on_init(
-    const hardware_interface::HardwareComponentInterfaceParams & params) {
+    const hardware_interface::HardwareComponentInterfaceParams& params) {
   if (hardware_interface::SystemInterface::on_init(params) !=
       CallbackReturn::SUCCESS) {
     return CallbackReturn::ERROR;
@@ -584,7 +582,7 @@ CallbackReturn GazeboOdriSimSystem::on_init(
 }
 
 CallbackReturn GazeboOdriSimSystem::on_configure(
-    const rclcpp_lifecycle::State & /*previous_state*/) {
+    const rclcpp_lifecycle::State& /*previous_state*/) {
   RCLCPP_INFO(this->nh_->get_logger(), "System Successfully configured!");
   return CallbackReturn::SUCCESS;
 }
@@ -600,31 +598,31 @@ GazeboOdriSimSystem::export_command_interfaces() {
 }
 
 CallbackReturn GazeboOdriSimSystem::on_activate(
-    const rclcpp_lifecycle::State &previous_state) {
+    const rclcpp_lifecycle::State& previous_state) {
   return hardware_interface::SystemInterface::on_activate(previous_state);
 }
 
 CallbackReturn GazeboOdriSimSystem::on_deactivate(
-    const rclcpp_lifecycle::State &previous_state) {
+    const rclcpp_lifecycle::State& previous_state) {
   return hardware_interface::SystemInterface::on_deactivate(previous_state);
 }
 
 hardware_interface::return_type GazeboOdriSimSystem::read(
-    const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) {
+    const rclcpp::Time& /*time*/, const rclcpp::Duration& /*period*/) {
   for (unsigned int i = 0; i < this->dataPtr->joints_.size(); ++i) {
     if (this->dataPtr->joints_[i].sim_joint == sim::kNullEntity) {
       continue;
     }
 
-    const auto *jointVelocity =
+    const auto* jointVelocity =
         this->dataPtr->ecm->Component<sim::components::JointVelocity>(
             this->dataPtr->joints_[i].sim_joint);
 
-    const auto *jointWrench =
+    const auto* jointWrench =
         this->dataPtr->ecm->Component<sim::components::JointTransmittedWrench>(
             this->dataPtr->joints_[i].sim_joint);
 
-    const auto *jointPositions =
+    const auto* jointPositions =
         this->dataPtr->ecm->Component<sim::components::JointPosition>(
             this->dataPtr->joints_[i].sim_joint);
 
@@ -692,21 +690,22 @@ hardware_interface::return_type GazeboOdriSimSystem::read(
 
 hardware_interface::return_type
 GazeboOdriSimSystem::perform_command_mode_switch(
-    const std::vector<std::string> &start_interfaces,
-    const std::vector<std::string> &stop_interfaces) {
+    const std::vector<std::string>& start_interfaces,
+    const std::vector<std::string>& stop_interfaces) {
   for (unsigned int j = 0; j < this->dataPtr->joints_.size(); j++) {
-    for (const std::string &interface_name : stop_interfaces) {
+    for (const std::string& interface_name : stop_interfaces) {
       if (interface_name == this->dataPtr->joints_[j].if_name_position ||
           interface_name == this->dataPtr->joints_[j].if_name_velocity ||
           interface_name == this->dataPtr->joints_[j].if_name_effort ||
           interface_name == this->dataPtr->joints_[j].if_name_gain_kp ||
           interface_name == this->dataPtr->joints_[j].if_name_gain_kd) {
         this->dataPtr->joints_[j].joint_control_method =
-            odri_gz_ros2_control::GazeboOdriSimSystemInterface::ControlMethod(NONE);
+            odri_gz_ros2_control::GazeboOdriSimSystemInterface::ControlMethod(
+                NONE);
       }
     }
 
-    for (const std::string &interface_name : start_interfaces) {
+    for (const std::string& interface_name : start_interfaces) {
       if (interface_name == this->dataPtr->joints_[j].if_name_position) {
         this->dataPtr->joints_[j].joint_control_method |= POSITION;
       } else if (interface_name == this->dataPtr->joints_[j].if_name_velocity) {
@@ -716,7 +715,8 @@ GazeboOdriSimSystem::perform_command_mode_switch(
       } else if (interface_name == this->dataPtr->joints_[j].if_name_gain_kp ||
                  interface_name == this->dataPtr->joints_[j].if_name_gain_kd) {
         this->dataPtr->joints_[j].joint_control_method =
-            odri_gz_ros2_control::GazeboOdriSimSystemInterface::ControlMethod(POS_VEL_EFF_GAINS);
+            odri_gz_ros2_control::GazeboOdriSimSystemInterface::ControlMethod(
+                POS_VEL_EFF_GAINS);
       }
     }
   }
@@ -725,7 +725,7 @@ GazeboOdriSimSystem::perform_command_mode_switch(
 }
 
 hardware_interface::return_type GazeboOdriSimSystem::write(
-    const rclcpp::Time &time, const rclcpp::Duration & /*period*/) {
+    const rclcpp::Time& time, const rclcpp::Duration& /*period*/) {
   // write() runs at every physics step, so the time since the previous call
   // is the physics step.
   double step = 0.0;
@@ -739,17 +739,16 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
     if (this->dataPtr->joints_[i].sim_joint == sim::kNullEntity) {
       continue;
     }
-    RCLCPP_DEBUG_STREAM(this->nh_->get_logger(), "joint name: "
-                       << this->dataPtr->joints_[i].name << " " <<
-                       "pd: " <<
-                       this->dataPtr->joints_[i].joint_position_cmd << " vd:" <<
-                       this->dataPtr->joints_[i].joint_velocity_cmd << " ed:"<<
-                       this->dataPtr->joints_[i].joint_effort_cmd << " Kpd:"<<
-                       this->dataPtr->joints_[i].joint_Kp_cmd << " Kdd:"<<
-                       this->dataPtr->joints_[i].joint_Kd_cmd << " jp:"<<
-                       this->dataPtr->joints_[i].joint_position << " jv:"<<
-                       this->dataPtr->joints_[i].joint_velocity
-                       );
+    RCLCPP_DEBUG_STREAM(
+        this->nh_->get_logger(),
+        "joint name: " << this->dataPtr->joints_[i].name << " "
+                       << "pd: " << this->dataPtr->joints_[i].joint_position_cmd
+                       << " vd:" << this->dataPtr->joints_[i].joint_velocity_cmd
+                       << " ed:" << this->dataPtr->joints_[i].joint_effort_cmd
+                       << " Kpd:" << this->dataPtr->joints_[i].joint_Kp_cmd
+                       << " Kdd:" << this->dataPtr->joints_[i].joint_Kd_cmd
+                       << " jp:" << this->dataPtr->joints_[i].joint_position
+                       << " jv:" << this->dataPtr->joints_[i].joint_velocity);
 
     if (this->dataPtr->joints_[i].joint_control_method & POS_VEL_EFF_GAINS) {
       // ODRI master board torque law:
@@ -761,10 +760,10 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
       // oscillate around the setpoint.
       double position = this->dataPtr->joints_[i].joint_position;
       double velocity = this->dataPtr->joints_[i].joint_velocity;
-      const auto *simPosition =
+      const auto* simPosition =
           this->dataPtr->ecm->Component<sim::components::JointPosition>(
               this->dataPtr->joints_[i].sim_joint);
-      const auto *simVelocity =
+      const auto* simVelocity =
           this->dataPtr->ecm->Component<sim::components::JointVelocity>(
               this->dataPtr->joints_[i].sim_joint);
       if (simPosition && !simPosition->Data().empty()) {
@@ -864,7 +863,7 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
   }
 
   // set values of all mimic joints with respect to mimicked joint
-  for (const auto &mimic_joint : this->info_.mimic_joints) {
+  for (const auto& mimic_joint : this->info_.mimic_joints) {
     double position_mimicked_joint =
         this->dataPtr->ecm
             ->Component<sim::components::JointPosition>(

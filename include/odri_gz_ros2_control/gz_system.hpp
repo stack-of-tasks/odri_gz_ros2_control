@@ -26,7 +26,7 @@
 
 namespace odri_gz_ros2_control {
 using CallbackReturn =
-rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
+    rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
 // Forward declaration
 class GazeboOdriSimSystemPrivate;
@@ -39,7 +39,8 @@ class GazeboOdriSimSystem : public GazeboOdriSimSystemInterface {
  public:
   // Documentation Inherited
   CallbackReturn on_init(
-      const hardware_interface::HardwareComponentInterfaceParams & params) override;
+      const hardware_interface::HardwareComponentInterfaceParams& params)
+      override;
 
   CallbackReturn on_configure(
       const rclcpp_lifecycle::State& previous_state) override;
