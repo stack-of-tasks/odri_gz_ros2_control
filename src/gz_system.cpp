@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "odri_gz_ros2_control/gz_system.hpp"
+#include "motkin_gz_ros2_control/gz_system.hpp"
 
 #include <gz/msgs/imu.pb.h>
 #include <gz/msgs/wrench.pb.h>
@@ -61,11 +61,11 @@
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
 
 // String constants matching
-// ros2_hardware_interface_odri/system_interface_odri.hpp
-namespace ros2_control_odri {
+// ros2_hardware_interface_motkin/system_interface_motkin.hpp
+namespace ros2_control_motkin {
 constexpr const char* HW_IF_GAIN_KP = "gain_kp";
 constexpr const char* HW_IF_GAIN_KD = "gain_kd";
-}  // namespace ros2_control_odri
+}  // namespace ros2_control_motkin
 
 struct jointData {
   std::string name;
@@ -83,11 +83,11 @@ struct jointData {
   double joint_Kd_cmd;
   bool is_actuated;
   // Inertia of the joint's child link about the joint axis, a lower bound of
-  // the inertia seen by the joint. Used to make the damping term of the ODRI
+  // the inertia seen by the joint. Used to make the damping term of the MOTKIN
   // torque law implicit; 0 when unknown (explicit law).
   double damping_inertia = 0.0;
   sim::Entity sim_joint;
-  odri_gz_ros2_control::GazeboOdriSimSystemInterface::ControlMethod
+  motkin_gz_ros2_control::GazeboMotkinSimSystemInterface::ControlMethod
       joint_control_method;
   std::string if_name_position;
   std::string if_name_velocity;
@@ -136,10 +136,10 @@ void ImuData::OnIMU(const gz::msgs::IMU& _msg) {
   this->imu_sensor_data_[9] = _msg.linear_acceleration().z();
 }
 
-class odri_gz_ros2_control::GazeboOdriSimSystemPrivate {
+class motkin_gz_ros2_control::GazeboMotkinSimSystemPrivate {
  public:
-  GazeboOdriSimSystemPrivate() = default;
-  ~GazeboOdriSimSystemPrivate() = default;
+  GazeboMotkinSimSystemPrivate() = default;
+  ~GazeboMotkinSimSystemPrivate() = default;
 
   rclcpp::Time last_update_sim_time_ros_;
   std::vector<struct jointData> joints_;
@@ -192,14 +192,14 @@ double ChildInertiaAboutAxis(const sim::EntityComponentManager& _ecm,
 
 }  // namespace
 
-namespace odri_gz_ros2_control {
+namespace motkin_gz_ros2_control {
 
-bool GazeboOdriSimSystem::initSim(
+bool GazeboMotkinSimSystem::initSim(
     rclcpp::Node::SharedPtr& model_nh,
     std::map<std::string, sim::Entity>& enableJoints,
     const hardware_interface::HardwareInfo& hardware_info,
     sim::EntityComponentManager& _ecm, unsigned int update_rate) {
-  this->dataPtr = std::make_unique<GazeboOdriSimSystemPrivate>();
+  this->dataPtr = std::make_unique<GazeboMotkinSimSystemPrivate>();
   this->dataPtr->last_update_sim_time_ros_ = rclcpp::Time();
 
   this->nh_ = model_nh;
@@ -296,9 +296,9 @@ bool GazeboOdriSimSystem::initSim(
     this->dataPtr->joints_[j].if_name_effort =
         joint_name + "/" + hardware_interface::HW_IF_EFFORT;
     this->dataPtr->joints_[j].if_name_gain_kp =
-        joint_name + "/" + ros2_control_odri::HW_IF_GAIN_KP;
+        joint_name + "/" + ros2_control_motkin::HW_IF_GAIN_KP;
     this->dataPtr->joints_[j].if_name_gain_kd =
-        joint_name + "/" + ros2_control_odri::HW_IF_GAIN_KD;
+        joint_name + "/" + ros2_control_motkin::HW_IF_GAIN_KD;
 
     // Log if joint is a mimic joint
     auto it_mimic = std::find_if(hardware_info.mimic_joints.begin(),
@@ -378,7 +378,7 @@ bool GazeboOdriSimSystem::initSim(
       if (joint_info.state_interfaces[i].name == "gain_kp") {
         RCLCPP_INFO_STREAM(this->nh_->get_logger(), "\t\t gain_kp");
         this->dataPtr->state_interfaces_.emplace_back(
-            joint_name, ros2_control_odri::HW_IF_GAIN_KP,
+            joint_name, ros2_control_motkin::HW_IF_GAIN_KP,
             &this->dataPtr->joints_[j].joint_Kp);
         initial_Kp = get_initial_value(joint_info.state_interfaces[i]);
         this->dataPtr->joints_[j].joint_Kp = initial_Kp;
@@ -386,7 +386,7 @@ bool GazeboOdriSimSystem::initSim(
       if (joint_info.state_interfaces[i].name == "gain_kd") {
         RCLCPP_INFO_STREAM(this->nh_->get_logger(), "\t\t gain_kd");
         this->dataPtr->state_interfaces_.emplace_back(
-            joint_name, ros2_control_odri::HW_IF_GAIN_KD,
+            joint_name, ros2_control_motkin::HW_IF_GAIN_KD,
             &this->dataPtr->joints_[j].joint_Kd);
         initial_Kd = get_initial_value(joint_info.state_interfaces[i]);
         this->dataPtr->joints_[j].joint_Kd = initial_Kd;
@@ -424,7 +424,7 @@ bool GazeboOdriSimSystem::initSim(
       } else if (joint_info.command_interfaces[i].name == "gain_kp") {
         RCLCPP_INFO_STREAM(this->nh_->get_logger(), "\t\t Gain Kp");
         this->dataPtr->command_interfaces_.emplace_back(
-            joint_name, ros2_control_odri::HW_IF_GAIN_KP,
+            joint_name, ros2_control_motkin::HW_IF_GAIN_KP,
             &this->dataPtr->joints_[j].joint_Kp_cmd);
         if (!std::isnan(initial_Kp)) {
           this->dataPtr->joints_[j].joint_Kp_cmd = initial_Kp;
@@ -432,7 +432,7 @@ bool GazeboOdriSimSystem::initSim(
       } else if (joint_info.command_interfaces[i].name == "gain_kd") {
         RCLCPP_INFO_STREAM(this->nh_->get_logger(), "\t\t Gain Kd");
         this->dataPtr->command_interfaces_.emplace_back(
-            joint_name, ros2_control_odri::HW_IF_GAIN_KD,
+            joint_name, ros2_control_motkin::HW_IF_GAIN_KD,
             &this->dataPtr->joints_[j].joint_Kd_cmd);
         if (!std::isnan(initial_Kd)) {
           this->dataPtr->joints_[j].joint_Kd_cmd = initial_Kd;
@@ -462,7 +462,7 @@ bool GazeboOdriSimSystem::initSim(
   return true;
 }
 
-void GazeboOdriSimSystem::registerSensors(
+void GazeboMotkinSimSystem::registerSensors(
     const hardware_interface::HardwareInfo& hardware_info) {
   // Build a name→ComponentInfo lookup map for O(1) per-sensor access
   std::unordered_map<std::string, const hardware_interface::ComponentInfo*>
@@ -571,48 +571,48 @@ void GazeboOdriSimSystem::registerSensors(
       });
 }
 
-CallbackReturn GazeboOdriSimSystem::on_init(
+CallbackReturn GazeboMotkinSimSystem::on_init(
     const hardware_interface::HardwareComponentInterfaceParams& params) {
   if (hardware_interface::SystemInterface::on_init(params) !=
       CallbackReturn::SUCCESS) {
     return CallbackReturn::ERROR;
   }
   if (params.hardware_info.hardware_plugin_name !=
-      "odri_gz_ros2_control/GazeboOdriSimSystem") {
+      "motkin_gz_ros2_control/GazeboMotkinSimSystem") {
     RCLCPP_WARN(this->nh_->get_logger(),
                 "The plugin name in <hardware><plugin> should be "
-                "'odri_gz_ros2_control/GazeboOdriSimSystem'.");
+                "'motkin_gz_ros2_control/GazeboMotkinSimSystem'.");
   }
   return CallbackReturn::SUCCESS;
 }
 
-CallbackReturn GazeboOdriSimSystem::on_configure(
+CallbackReturn GazeboMotkinSimSystem::on_configure(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   RCLCPP_INFO(this->nh_->get_logger(), "System Successfully configured!");
   return CallbackReturn::SUCCESS;
 }
 
 std::vector<hardware_interface::StateInterface>
-GazeboOdriSimSystem::export_state_interfaces() {
+GazeboMotkinSimSystem::export_state_interfaces() {
   return std::move(this->dataPtr->state_interfaces_);
 }
 
 std::vector<hardware_interface::CommandInterface>
-GazeboOdriSimSystem::export_command_interfaces() {
+GazeboMotkinSimSystem::export_command_interfaces() {
   return std::move(this->dataPtr->command_interfaces_);
 }
 
-CallbackReturn GazeboOdriSimSystem::on_activate(
+CallbackReturn GazeboMotkinSimSystem::on_activate(
     const rclcpp_lifecycle::State& previous_state) {
   return hardware_interface::SystemInterface::on_activate(previous_state);
 }
 
-CallbackReturn GazeboOdriSimSystem::on_deactivate(
+CallbackReturn GazeboMotkinSimSystem::on_deactivate(
     const rclcpp_lifecycle::State& previous_state) {
   return hardware_interface::SystemInterface::on_deactivate(previous_state);
 }
 
-hardware_interface::return_type GazeboOdriSimSystem::read(
+hardware_interface::return_type GazeboMotkinSimSystem::read(
     const rclcpp::Time& /*time*/, const rclcpp::Duration& /*period*/) {
   for (unsigned int i = 0; i < this->dataPtr->joints_.size(); ++i) {
     if (this->dataPtr->joints_[i].sim_joint == sim::kNullEntity) {
@@ -694,7 +694,7 @@ hardware_interface::return_type GazeboOdriSimSystem::read(
 }
 
 hardware_interface::return_type
-GazeboOdriSimSystem::perform_command_mode_switch(
+GazeboMotkinSimSystem::perform_command_mode_switch(
     const std::vector<std::string>& start_interfaces,
     const std::vector<std::string>& stop_interfaces) {
   for (unsigned int j = 0; j < this->dataPtr->joints_.size(); j++) {
@@ -705,8 +705,8 @@ GazeboOdriSimSystem::perform_command_mode_switch(
           interface_name == this->dataPtr->joints_[j].if_name_gain_kp ||
           interface_name == this->dataPtr->joints_[j].if_name_gain_kd) {
         this->dataPtr->joints_[j].joint_control_method =
-            odri_gz_ros2_control::GazeboOdriSimSystemInterface::ControlMethod(
-                NONE);
+            motkin_gz_ros2_control::GazeboMotkinSimSystemInterface::
+                ControlMethod(NONE);
       }
     }
 
@@ -720,8 +720,8 @@ GazeboOdriSimSystem::perform_command_mode_switch(
       } else if (interface_name == this->dataPtr->joints_[j].if_name_gain_kp ||
                  interface_name == this->dataPtr->joints_[j].if_name_gain_kd) {
         this->dataPtr->joints_[j].joint_control_method =
-            odri_gz_ros2_control::GazeboOdriSimSystemInterface::ControlMethod(
-                POS_VEL_EFF_GAINS);
+            motkin_gz_ros2_control::GazeboMotkinSimSystemInterface::
+                ControlMethod(POS_VEL_EFF_GAINS);
       }
     }
   }
@@ -729,7 +729,7 @@ GazeboOdriSimSystem::perform_command_mode_switch(
   return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type GazeboOdriSimSystem::write(
+hardware_interface::return_type GazeboMotkinSimSystem::write(
     const rclcpp::Time& time, const rclcpp::Duration& /*period*/) {
   // write() runs at every physics step, so the time since the previous call
   // is the physics step.
@@ -756,7 +756,7 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
                        << " jv:" << this->dataPtr->joints_[i].joint_velocity);
 
     if (this->dataPtr->joints_[i].joint_control_method & POS_VEL_EFF_GAINS) {
-      // ODRI master board torque law:
+      // Motkin master board torque law:
       // τ = τ_cmd + Kp * (pos_cmd - pos) + Kd * (vel_cmd - vel)
       // The board closes this PD loop locally at a high rate, so use the
       // current simulator state rather than joint_position/joint_velocity,
@@ -901,8 +901,8 @@ hardware_interface::return_type GazeboOdriSimSystem::write(
 
   return hardware_interface::return_type::OK;
 }
-}  // namespace odri_gz_ros2_control
+}  // namespace motkin_gz_ros2_control
 
 #include "pluginlib/class_list_macros.hpp"  // NOLINT
-PLUGINLIB_EXPORT_CLASS(odri_gz_ros2_control::GazeboOdriSimSystem,
-                       odri_gz_ros2_control::GazeboOdriSimSystemInterface)
+PLUGINLIB_EXPORT_CLASS(motkin_gz_ros2_control::GazeboMotkinSimSystem,
+                       motkin_gz_ros2_control::GazeboMotkinSimSystemInterface)

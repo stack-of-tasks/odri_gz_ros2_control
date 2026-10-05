@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
-#define ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
+#ifndef MOTKIN_GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
+#define MOTKIN_GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
 
 #include <map>
 #include <memory>
@@ -28,7 +28,7 @@ namespace sim = gz::sim;
 #include <hardware_interface/types/hardware_interface_type_values.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-namespace odri_gz_ros2_control {
+namespace motkin_gz_ros2_control {
 
 /// \brief This class allows us to handle flags easily, instead of using strings
 ///
@@ -87,7 +87,7 @@ class SafeEnum {
 
 // SystemInterface provides API-level access to read and command joint
 // properties.
-class GazeboOdriSimSystemInterface
+class GazeboMotkinSimSystemInterface
     : public hardware_interface::SystemInterface {
  public:
   /// \brief Initialize the system interface
@@ -117,6 +117,6 @@ class GazeboOdriSimSystemInterface
   rclcpp::Node::SharedPtr nh_;
 };
 
-}  // namespace odri_gz_ros2_control
+}  // namespace motkin_gz_ros2_control
 
-#endif  // ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_
+#endif  // MOTKIN_GZ_ROS2_CONTROL__GZ_SYSTEM_INTERFACE_HPP_

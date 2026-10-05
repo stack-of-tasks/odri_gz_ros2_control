@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ODRI_GZ_ROS2_CONTROL__GZ_ROS2_CONTROL_PLUGIN_HPP_
-#define ODRI_GZ_ROS2_CONTROL__GZ_ROS2_CONTROL_PLUGIN_HPP_
+#ifndef MOTKIN_GZ_ROS2_CONTROL__GZ_ROS2_CONTROL_PLUGIN_HPP_
+#define MOTKIN_GZ_ROS2_CONTROL__GZ_ROS2_CONTROL_PLUGIN_HPP_
 
 // c++ system
 #include <memory>
@@ -21,20 +21,20 @@
 #include <gz/sim/System.hh>
 namespace sim = gz::sim;
 
-namespace odri_gz_ros2_control {
+namespace motkin_gz_ros2_control {
 // Forward declarations.
-class GazeboOdriSimROS2ControlPluginPrivate;
+class GazeboMotkinSimROS2ControlPluginPrivate;
 
-class GazeboOdriSimROS2ControlPlugin : public sim::System,
-                                       public sim::ISystemConfigure,
-                                       public sim::ISystemPreUpdate,
-                                       public sim::ISystemPostUpdate {
+class GazeboMotkinSimROS2ControlPlugin : public sim::System,
+                                         public sim::ISystemConfigure,
+                                         public sim::ISystemPreUpdate,
+                                         public sim::ISystemPostUpdate {
  public:
   /// \brief Constructor
-  GazeboOdriSimROS2ControlPlugin();
+  GazeboMotkinSimROS2ControlPlugin();
 
   /// \brief Destructor
-  ~GazeboOdriSimROS2ControlPlugin() override;
+  ~GazeboMotkinSimROS2ControlPlugin() override;
 
   // Documentation inherited
   void Configure(const sim::Entity& _entity,
@@ -51,8 +51,8 @@ class GazeboOdriSimROS2ControlPlugin : public sim::System,
 
  private:
   /// \brief Private data pointer.
-  std::unique_ptr<GazeboOdriSimROS2ControlPluginPrivate> dataPtr;
+  std::unique_ptr<GazeboMotkinSimROS2ControlPluginPrivate> dataPtr;
 };
-}  // namespace odri_gz_ros2_control
+}  // namespace motkin_gz_ros2_control
 
-#endif  // ODRI_GZ_ROS2_CONTROL__GZ_ROS2_CONTROL_PLUGIN_HPP_
+#endif  // MOTKIN_GZ_ROS2_CONTROL__GZ_ROS2_CONTROL_PLUGIN_HPP_

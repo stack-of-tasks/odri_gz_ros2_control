@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(odri_gz_ros2_control)
+project(motkin_gz_ros2_control)
 
 find_package(ros2_control_cmake REQUIRED)
 set_compiler_options()
@@ -64,20 +64,20 @@ target_include_directories(
 
 #########
 
-add_library(gz_hardware_odri_plugins SHARED src/gz_system.cpp)
-ament_target_dependencies(gz_hardware_odri_plugins
+add_library(gz_hardware_motkin_plugins SHARED src/gz_system.cpp)
+ament_target_dependencies(gz_hardware_motkin_plugins
   rclcpp_lifecycle
   hardware_interface
   rclcpp
 )
-target_link_libraries(gz_hardware_odri_plugins "${GZ_SIM}::${GZ_SIM}")
+target_link_libraries(gz_hardware_motkin_plugins "${GZ_SIM}::${GZ_SIM}")
 
 # Install headers (trailing slash installs contents, not the directory itself)
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 
 # Install library and export targets
 install(
-    TARGETS ${PROJECT_NAME}-system gz_hardware_odri_plugins
+    TARGETS ${PROJECT_NAME}-system gz_hardware_motkin_plugins
     EXPORT export_${PROJECT_NAME}
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
@@ -97,23 +97,23 @@ if(BUILD_TESTING)
     list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_uncrustify)
     ament_lint_auto_find_test_dependencies()
 
-    ament_add_gtest(test_odri_gz_system
-      test/test_odri_gz_system.cpp
+    ament_add_gtest(test_motkin_gz_system
+      test/test_motkin_gz_system.cpp
     )
     target_include_directories(
-        test_odri_gz_system
+        test_motkin_gz_system
         PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     )
-    ament_target_dependencies(test_odri_gz_system
+    ament_target_dependencies(test_motkin_gz_system
       hardware_interface
       rclcpp
     )
-    target_link_libraries(test_odri_gz_system "${GZ_SIM}::${GZ_SIM}")
+    target_link_libraries(test_motkin_gz_system "${GZ_SIM}::${GZ_SIM}")
 endif()
 
 # Export old-style CMake variables
 ament_export_include_directories(include)
-ament_export_libraries(${PROJECT_NAME}-system gz_hardware_odri_plugins)
+ament_export_libraries(${PROJECT_NAME}-system gz_hardware_motkin_plugins)
 
 # Export modern CMake targets
 ament_export_targets(export_${PROJECT_NAME})
@@ -123,7 +123,7 @@ ament_export_dependencies(
   hardware_interface
 )
 
-pluginlib_export_plugin_description_file(odri_gz_ros2_control gz_hardware_odri_plugins.xml)
+pluginlib_export_plugin_description_file(motkin_gz_ros2_control gz_hardware_motkin_plugins.xml)
 
 # Setup the project
 ament_package()

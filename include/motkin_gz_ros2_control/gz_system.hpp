@@ -12,30 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_HPP_
-#define ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_HPP_
+#ifndef MOTKIN_GZ_ROS2_CONTROL__GZ_SYSTEM_HPP_
+#define MOTKIN_GZ_ROS2_CONTROL__GZ_SYSTEM_HPP_
 
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "odri_gz_ros2_control/gz_system_interface.hpp"
+#include "motkin_gz_ros2_control/gz_system_interface.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 
-namespace odri_gz_ros2_control {
+namespace motkin_gz_ros2_control {
 using CallbackReturn =
     rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
 // Forward declaration
-class GazeboOdriSimSystemPrivate;
+class GazeboMotkinSimSystemPrivate;
 
-// These class must inherit `odri_gz_ros2_control::GazeboOdriSimSystemInterface`
-// which implements a simulated `ros2_control`
-// `hardware_interface::SystemInterface`.
+// These class must inherit
+// `motkin_gz_ros2_control::GazeboMotkinSimSystemInterface` which implements a
+// simulated `ros2_control` `hardware_interface::SystemInterface`.
 
-class GazeboOdriSimSystem : public GazeboOdriSimSystemInterface {
+class GazeboMotkinSimSystem : public GazeboMotkinSimSystemInterface {
  public:
   // Documentation Inherited
   CallbackReturn on_init(
@@ -85,9 +85,9 @@ class GazeboOdriSimSystem : public GazeboOdriSimSystemInterface {
   void registerSensors(const hardware_interface::HardwareInfo& hardware_info);
 
   /// \brief Private data class
-  std::unique_ptr<GazeboOdriSimSystemPrivate> dataPtr;
+  std::unique_ptr<GazeboMotkinSimSystemPrivate> dataPtr;
 };
 
-}  // namespace odri_gz_ros2_control
+}  // namespace motkin_gz_ros2_control
 
-#endif  // ODRI_GZ_ROS2_CONTROL__GZ_SYSTEM_HPP_
+#endif  // MOTKIN_GZ_ROS2_CONTROL__GZ_SYSTEM_HPP_

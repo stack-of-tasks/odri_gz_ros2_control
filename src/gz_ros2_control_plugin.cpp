@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "odri_gz_ros2_control/gz_ros2_control_plugin.hpp"
+#include "motkin_gz_ros2_control/gz_ros2_control_plugin.hpp"
 
 #include <chrono>
 #include <map>
@@ -37,9 +37,9 @@
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include "odri_gz_ros2_control/gz_system.hpp"
+#include "motkin_gz_ros2_control/gz_system.hpp"
 
-namespace odri_gz_ros2_control {
+namespace motkin_gz_ros2_control {
 class GZResourceManager : public hardware_interface::ResourceManager {
  public:
   GZResourceManager(rclcpp::Node::SharedPtr& node,
@@ -47,8 +47,9 @@ class GZResourceManager : public hardware_interface::ResourceManager {
                     std::map<std::string, sim::Entity> enabledJoints)
       : hardware_interface::ResourceManager(node->get_node_clock_interface(),
                                             node->get_node_logging_interface()),
-        gz_system_loader_("odri_gz_ros2_control",
-                          "odri_gz_ros2_control::GazeboOdriSimSystemInterface"),
+        gz_system_loader_(
+            "motkin_gz_ros2_control",
+            "motkin_gz_ros2_control::GazeboMotkinSimSystemInterface"),
         logger_(node->get_logger().get_child("GZResourceManager")) {
     node_ = node;
     ecm_ = &ecm;
@@ -72,15 +73,14 @@ class GZResourceManager : public hardware_interface::ResourceManager {
       RCLCPP_DEBUG(logger_, "Load hardware interface %s ...",
                    robot_hw_sim_type_str_.c_str());
 
-      std::unique_ptr<odri_gz_ros2_control::GazeboOdriSimSystemInterface>
+      std::unique_ptr<motkin_gz_ros2_control::GazeboMotkinSimSystemInterface>
           gzSimSystem;
       std::scoped_lock guard(resource_interfaces_lock_,
                              claimed_command_interfaces_lock_);
       try {
-        gzSimSystem =
-            std::unique_ptr<odri_gz_ros2_control::GazeboOdriSimSystemInterface>(
-                gz_system_loader_.createUnmanagedInstance(
-                    robot_hw_sim_type_str_));
+        gzSimSystem = std::unique_ptr<
+            motkin_gz_ros2_control::GazeboMotkinSimSystemInterface>(
+            gz_system_loader_.createUnmanagedInstance(robot_hw_sim_type_str_));
       } catch (pluginlib::PluginlibException& ex) {
         RCLCPP_ERROR(logger_,
                      "The plugin failed to load for some reason. Error: %s\n",
@@ -109,14 +109,14 @@ class GZResourceManager : public hardware_interface::ResourceManager {
   sim::EntityComponentManager* ecm_;
   std::map<std::string, sim::Entity> enabledJoints_;
 
-  pluginlib::ClassLoader<odri_gz_ros2_control::GazeboOdriSimSystemInterface>
+  pluginlib::ClassLoader<motkin_gz_ros2_control::GazeboMotkinSimSystemInterface>
       gz_system_loader_;
 
   rclcpp::Logger logger_;
 };
 
 //////////////////////////////////////////////////
-class GazeboOdriSimROS2ControlPluginPrivate {
+class GazeboMotkinSimROS2ControlPluginPrivate {
  public:
   std::map<std::string, sim::Entity> GetEnabledJoints(
       const sim::Entity& _entity, sim::EntityComponentManager& _ecm) const;
@@ -146,7 +146,7 @@ class GazeboOdriSimROS2ControlPluginPrivate {
 
 //////////////////////////////////////////////////
 std::map<std::string, sim::Entity>
-GazeboOdriSimROS2ControlPluginPrivate::GetEnabledJoints(
+GazeboMotkinSimROS2ControlPluginPrivate::GetEnabledJoints(
     const sim::Entity& _entity, sim::EntityComponentManager& _ecm) const {
   std::map<std::string, sim::Entity> output;
 
@@ -167,28 +167,31 @@ GazeboOdriSimROS2ControlPluginPrivate::GetEnabledJoints(
         break;
       }
       case sdf::JointType::FIXED: {
-        RCLCPP_INFO(node_->get_logger(),
-                    "[odri_gz_ros2_control] Fixed joint ['%s'] (Entity='%lu') "
-                    "is skipped.",
-                    jointName.c_str(), jointEntity);
+        RCLCPP_INFO(
+            node_->get_logger(),
+            "[motkin_gz_ros2_control] Fixed joint ['%s'] (Entity='%lu') "
+            "is skipped.",
+            jointName.c_str(), jointEntity);
         continue;
       }
       case sdf::JointType::REVOLUTE2:
       case sdf::JointType::SCREW:
       case sdf::JointType::BALL:
       case sdf::JointType::UNIVERSAL: {
-        RCLCPP_WARN(node_->get_logger(),
-                    "[odri_gz_ros2_control] Joint ['%s'] (Entity='%lu') is of "
-                    "unsupported type."
-                    " Only joints with a single axis are supported.",
-                    jointName.c_str(), jointEntity);
+        RCLCPP_WARN(
+            node_->get_logger(),
+            "[motkin_gz_ros2_control] Joint ['%s'] (Entity='%lu') is of "
+            "unsupported type."
+            " Only joints with a single axis are supported.",
+            jointName.c_str(), jointEntity);
         continue;
       }
       default: {
-        RCLCPP_WARN(node_->get_logger(),
-                    "[odri_gz_ros2_control] Joint ['%s'] (Entity='%lu') is of "
-                    "unknown type.",
-                    jointName.c_str(), jointEntity);
+        RCLCPP_WARN(
+            node_->get_logger(),
+            "[motkin_gz_ros2_control] Joint ['%s'] (Entity='%lu') is of "
+            "unknown type.",
+            jointName.c_str(), jointEntity);
         continue;
       }
     }
@@ -199,20 +202,21 @@ GazeboOdriSimROS2ControlPluginPrivate::GetEnabledJoints(
 }
 
 //////////////////////////////////////////////////
-GazeboOdriSimROS2ControlPlugin::GazeboOdriSimROS2ControlPlugin()
-    : dataPtr(std::make_unique<GazeboOdriSimROS2ControlPluginPrivate>()) {}
+GazeboMotkinSimROS2ControlPlugin::GazeboMotkinSimROS2ControlPlugin()
+    : dataPtr(std::make_unique<GazeboMotkinSimROS2ControlPluginPrivate>()) {}
 
 //////////////////////////////////////////////////
-GazeboOdriSimROS2ControlPlugin::~GazeboOdriSimROS2ControlPlugin() {
+GazeboMotkinSimROS2ControlPlugin::~GazeboMotkinSimROS2ControlPlugin() {
   this->dataPtr->executor_->cancel();
   this->dataPtr->thread_executor_spin_.join();
 }
 
 //////////////////////////////////////////////////
-void GazeboOdriSimROS2ControlPlugin::Configure(
+void GazeboMotkinSimROS2ControlPlugin::Configure(
     const sim::Entity& _entity, const std::shared_ptr<const sdf::Element>& _sdf,
     sim::EntityComponentManager& _ecm, sim::EventManager&) {
-  rclcpp::Logger logger = rclcpp::get_logger("GazeboOdriSimROS2ControlPlugin");
+  rclcpp::Logger logger =
+      rclcpp::get_logger("GazeboMotkinSimROS2ControlPlugin");
 
   const auto model = sim::Model(_entity);
   if (!model.Valid(_ecm)) {
@@ -297,7 +301,8 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
                  rclcpp::InitOptions(), rclcpp::SignalHandlerOptions::None);
   }
 
-  this->dataPtr->node_ = rclcpp::Node::make_shared("odri_gz_ros2_control", ns);
+  this->dataPtr->node_ =
+      rclcpp::Node::make_shared("motkin_gz_ros2_control", ns);
   this->dataPtr->executor_ =
       std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   this->dataPtr->executor_->add_node(this->dataPtr->node_);
@@ -361,7 +366,7 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
   }
 
   std::unique_ptr<hardware_interface::ResourceManager> resource_manager_ =
-      std::make_unique<odri_gz_ros2_control::GZResourceManager>(
+      std::make_unique<motkin_gz_ros2_control::GZResourceManager>(
           this->dataPtr->node_, _ecm, enabledJoints);
 
   RCLCPP_INFO(this->dataPtr->node_->get_logger(), "Loading controller_manager");
@@ -399,7 +404,7 @@ void GazeboOdriSimROS2ControlPlugin::Configure(
 }
 
 //////////////////////////////////////////////////
-void GazeboOdriSimROS2ControlPlugin::PreUpdate(
+void GazeboMotkinSimROS2ControlPlugin::PreUpdate(
     const sim::UpdateInfo& _info, sim::EntityComponentManager& /*_ecm*/) {
   if (!this->dataPtr->controller_manager_) {
     return;
@@ -436,7 +441,7 @@ void GazeboOdriSimROS2ControlPlugin::PreUpdate(
 }
 
 //////////////////////////////////////////////////
-void GazeboOdriSimROS2ControlPlugin::PostUpdate(
+void GazeboMotkinSimROS2ControlPlugin::PostUpdate(
     const sim::UpdateInfo& _info, const sim::EntityComponentManager& /*_ecm*/) {
   if (!this->dataPtr->controller_manager_) {
     return;
@@ -455,10 +460,10 @@ void GazeboOdriSimROS2ControlPlugin::PostUpdate(
     this->dataPtr->controller_manager_->update(sim_time_ros, sim_period);
   }
 }
-}  // namespace odri_gz_ros2_control
+}  // namespace motkin_gz_ros2_control
 
 GZ_ADD_PLUGIN(
-    odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin, gz::sim::System,
-    odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemConfigure,
-    odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPreUpdate,
-    odri_gz_ros2_control::GazeboOdriSimROS2ControlPlugin::ISystemPostUpdate)
+    motkin_gz_ros2_control::GazeboMotkinSimROS2ControlPlugin, gz::sim::System,
+    motkin_gz_ros2_control::GazeboMotkinSimROS2ControlPlugin::ISystemConfigure,
+    motkin_gz_ros2_control::GazeboMotkinSimROS2ControlPlugin::ISystemPreUpdate,
+    motkin_gz_ros2_control::GazeboMotkinSimROS2ControlPlugin::ISystemPostUpdate)
