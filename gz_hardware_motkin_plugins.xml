@@ -1,0 +1,10 @@
+<library path="gz_hardware_motkin_plugins">
+  <class
+    name="motkin_gz_ros2_control/GazeboMotkinSimSystem"
+    type="motkin_gz_ros2_control::GazeboMotkinSimSystem"
+    base_class_type="motkin_gz_ros2_control::GazeboMotkinSimSystemInterface">
+    <description>
+      GazeboPositionJoint
+    </description>
+  </class>
+</library>

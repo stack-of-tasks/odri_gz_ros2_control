@@ -14,57 +14,57 @@
 
 #include <gtest/gtest.h>
 
-#include "odri_gz_ros2_control/gz_system_interface.hpp"
+#include "motkin_gz_ros2_control/gz_system_interface.hpp"
 
 // ---------------------------------------------------------------------------
 // Torque law: τ = τ_cmd + Kp*(pos_cmd - pos) + Kd*(vel_cmd - vel)
 // ---------------------------------------------------------------------------
 
-// Replicates the formula from GazeboOdriSimSystem::write() so that any
+// Replicates the formula from GazeboMotkinSimSystem::write() so that any
 // future change to the formula breaks this test explicitly.
-static double odri_torque(double effort_cmd, double Kp, double pos_cmd,
-                          double pos, double Kd, double vel_cmd, double vel) {
+static double motkin_torque(double effort_cmd, double Kp, double pos_cmd,
+                            double pos, double Kd, double vel_cmd, double vel) {
   return effort_cmd + Kp * (pos_cmd - pos) + Kd * (vel_cmd - vel);
 }
 
-TEST(OdriTorqueLaw, PureEffortWhenGainsAreZero) {
-  EXPECT_DOUBLE_EQ(odri_torque(3.5, 0.0, 1.0, 0.5, 0.0, 0.2, 0.0), 3.5);
+TEST(MotkinTorqueLaw, PureEffortWhenGainsAreZero) {
+  EXPECT_DOUBLE_EQ(motkin_torque(3.5, 0.0, 1.0, 0.5, 0.0, 0.2, 0.0), 3.5);
 }
 
-TEST(OdriTorqueLaw, PositionErrorOnly) {
+TEST(MotkinTorqueLaw, PositionErrorOnly) {
   // pos_cmd=1, pos=0.5 → pos_error=0.5; vel_error=0; Kp=10
-  EXPECT_DOUBLE_EQ(odri_torque(0.0, 10.0, 1.0, 0.5, 0.0, 0.0, 0.0), 5.0);
+  EXPECT_DOUBLE_EQ(motkin_torque(0.0, 10.0, 1.0, 0.5, 0.0, 0.0, 0.0), 5.0);
 }
 
-TEST(OdriTorqueLaw, VelocityErrorOnly) {
+TEST(MotkinTorqueLaw, VelocityErrorOnly) {
   // vel_cmd=0.3, vel=0.0 → vel_error=0.3; pos_error=0; Kd=2
-  EXPECT_DOUBLE_EQ(odri_torque(0.0, 0.0, 0.0, 0.0, 2.0, 0.3, 0.0), 0.6);
+  EXPECT_DOUBLE_EQ(motkin_torque(0.0, 0.0, 0.0, 0.0, 2.0, 0.3, 0.0), 0.6);
 }
 
-TEST(OdriTorqueLaw, AllTermsCombined) {
+TEST(MotkinTorqueLaw, AllTermsCombined) {
   // effort=2, Kp=10 pos_error=0.5, Kd=1 vel_error=0.3 → 2+5+0.3=7.3
-  EXPECT_DOUBLE_EQ(odri_torque(2.0, 10.0, 1.0, 0.5, 1.0, 0.5, 0.2), 7.3);
+  EXPECT_DOUBLE_EQ(motkin_torque(2.0, 10.0, 1.0, 0.5, 1.0, 0.5, 0.2), 7.3);
 }
 
-TEST(OdriTorqueLaw, NegativePositionError) {
+TEST(MotkinTorqueLaw, NegativePositionError) {
   // pos_cmd < pos → braking torque
-  EXPECT_DOUBLE_EQ(odri_torque(0.0, 5.0, 0.0, 1.0, 0.0, 0.0, 0.0), -5.0);
+  EXPECT_DOUBLE_EQ(motkin_torque(0.0, 5.0, 0.0, 1.0, 0.0, 0.0, 0.0), -5.0);
 }
 
-TEST(OdriTorqueLaw, NegativeVelocityError) {
-  EXPECT_DOUBLE_EQ(odri_torque(0.0, 0.0, 0.0, 0.0, 4.0, -0.5, 0.0), -2.0);
+TEST(MotkinTorqueLaw, NegativeVelocityError) {
+  EXPECT_DOUBLE_EQ(motkin_torque(0.0, 0.0, 0.0, 0.0, 4.0, -0.5, 0.0), -2.0);
 }
 
-TEST(OdriTorqueLaw, AtEquilibrium) {
+TEST(MotkinTorqueLaw, AtEquilibrium) {
   // pos_cmd==pos, vel_cmd==vel → torque equals effort_cmd
-  EXPECT_DOUBLE_EQ(odri_torque(1.23, 10.0, 0.5, 0.5, 3.0, 0.1, 0.1), 1.23);
+  EXPECT_DOUBLE_EQ(motkin_torque(1.23, 10.0, 0.5, 0.5, 3.0, 0.1, 0.1), 1.23);
 }
 
 // ---------------------------------------------------------------------------
 // ControlMethod SafeEnum bitfield
 // ---------------------------------------------------------------------------
 
-using CM = odri_gz_ros2_control::GazeboOdriSimSystemInterface;
+using CM = motkin_gz_ros2_control::GazeboMotkinSimSystemInterface;
 
 TEST(ControlMethod, DefaultIsNone) {
   CM::ControlMethod m;
@@ -119,7 +119,7 @@ TEST(ControlMethod, SetThenClearWithNone) {
 // ---------------------------------------------------------------------------
 
 TEST(GainInterfaceNames, KpStringValue) {
-  // These must match the values in system_interface_odri.hpp
+  // These must match the values in system_interface_motkin.hpp
   const std::string kp{"gain_kp"};
   const std::string kd{"gain_kd"};
   EXPECT_EQ(kp, "gain_kp");

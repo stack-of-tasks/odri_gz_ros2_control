@@ -1,19 +1,14 @@
-# ODRI Gazebo odri_gz_ros2_control
+# MOTKIN Gazebo motkin_gz_ros2_control
 
 This plug is a fork of [gz_ros2_control](https://github.com/ros-controls/gz_ros2_control).
-It implements the specificities of ODRI that are accessible through ros2_control.
-It tries to provides a system interface similar to ros2_control_odri_hardware_interface.
+It implements the specificities of motkin that are accessible through ros2_control.
+It tries to provides a system interface similar to ros2_control_motkin_hardware_interface.
 
 # Installation
 
 ## From source
 ```
-mkdir -p odri_bolt_ws/src
-cd odri_bolt_ws/src
-git clone https://github.com/stack-of-stacks/odri_gz_ros2_control
-git checkout -b your_ros_release
-cd ..
-colcon build --packages-select odri_gz_ros2_control
+colcon build --packages-select motkin_gz_ros2_control
 ```
 
 ## Matrix of compatibility.
@@ -21,9 +16,3 @@ The package follows the compatibility matrix specified [here](https://gazebosim.
 
 Then the target is to  try to maintain this package for:
 - Jazzy (LTS) - GZ Harmonic
-
-# Branches
-
-master: Targets rolling releases and for now jammy and noble
-jazzy: target
-humble:
