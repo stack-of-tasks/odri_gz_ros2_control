@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>motkin_gz_ros2_control</name>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <description>Gazebo ros2_control package allows to control simulated robots using ros2_control framework.</description>
   <maintainer email="guilhem.saurel@laas.fr">Guilhem Saurel</maintainer>
   <license>Apache-2.0</license>
