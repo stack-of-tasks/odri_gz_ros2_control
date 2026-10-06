@@ -10,12 +10,12 @@
       {
         rosDistros = [ "jazzy" ];
         rosShellDistro = "jazzy";
-        rosOverrideAttrs.odri-gz-ros2-control = {
+        rosOverrideAttrs.motkin-gz-ros2-control = {
           src = lib.fileset.toSource {
             root = ./.;
             fileset = lib.fileset.unions [
               ./CMakeLists.txt
-              ./gz_hardware_odri_plugins.xml
+              ./gz_hardware_motkin_plugins.xml
               ./include
               ./package.xml
               ./src
