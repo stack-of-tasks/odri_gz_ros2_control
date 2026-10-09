@@ -508,9 +508,9 @@ bool GazeboMotkinSimSystem::registerGpios(
     gpio->name = gpio_info.name;
 
     if (!gpio_info.command_interfaces.empty()) {
-      RCLCPP_ERROR_STREAM(this->nh_->get_logger(),
-                          "GPIO '" << gpio->name
-                                   << "' must not have command interfaces.");
+      RCLCPP_ERROR_STREAM(
+          this->nh_->get_logger(),
+          "GPIO '" << gpio->name << "' must not have command interfaces.");
       return false;
     }
 
@@ -524,11 +524,11 @@ bool GazeboMotkinSimSystem::registerGpios(
         return false;
       }
       if (state_if.data_type != it->second) {
-        RCLCPP_ERROR_STREAM(
-            this->nh_->get_logger(),
-            "GPIO '" << gpio->name << "' state interface '" << state_if.name
-                     << "' has data_type '" << state_if.data_type
-                     << "', expected '" << it->second << "'.");
+        RCLCPP_ERROR_STREAM(this->nh_->get_logger(),
+                            "GPIO '" << gpio->name << "' state interface '"
+                                     << state_if.name << "' has data_type '"
+                                     << state_if.data_type << "', expected '"
+                                     << it->second << "'.");
         return false;
       }
       auto handle = std::make_shared<hardware_interface::StateInterface>(
@@ -549,9 +549,9 @@ bool GazeboMotkinSimSystem::registerGpios(
                              : "/" + gpio->name + "/flags";
       if (!this->dataPtr->node.Subscribe(gpio->flagsTopic, &GpioData::OnFlags,
                                          gpio.get())) {
-        RCLCPP_ERROR_STREAM(this->nh_->get_logger(),
-                            "Cannot subscribe to gz topic '"
-                                << gpio->flagsTopic << "'.");
+        RCLCPP_ERROR_STREAM(
+            this->nh_->get_logger(),
+            "Cannot subscribe to gz topic '" << gpio->flagsTopic << "'.");
         return false;
       }
       RCLCPP_INFO_STREAM(this->nh_->get_logger(),
@@ -735,8 +735,8 @@ CallbackReturn GazeboMotkinSimSystem::on_deactivate(
 hardware_interface::return_type GazeboMotkinSimSystem::read(
     const rclcpp::Time& time, const rclcpp::Duration& /*period*/) {
   // Simulated board status. Like the board's counter, the clock wraps.
-  const uint32_t t_us = static_cast<uint32_t>(
-      static_cast<uint64_t>(time.nanoseconds()) / 1000u);
+  const uint32_t t_us =
+      static_cast<uint32_t>(static_cast<uint64_t>(time.nanoseconds()) / 1000u);
   for (const auto& gpio : this->dataPtr->gpios_) {
     // set_value() does not block: if a controller holds the handle, the
     // value is simply refreshed at the next read().
