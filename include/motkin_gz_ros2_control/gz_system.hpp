@@ -46,8 +46,8 @@ class GazeboMotkinSimSystem : public GazeboMotkinSimSystemInterface {
       const rclcpp_lifecycle::State& previous_state) override;
 
   // Documentation Inherited
-  std::vector<hardware_interface::StateInterface> export_state_interfaces()
-      override;
+  std::vector<hardware_interface::StateInterface::ConstSharedPtr>
+  on_export_state_interfaces() override;
 
   // Documentation Inherited
   std::vector<hardware_interface::CommandInterface> export_command_interfaces()
@@ -83,6 +83,7 @@ class GazeboMotkinSimSystem : public GazeboMotkinSimSystemInterface {
 
  private:
   void registerSensors(const hardware_interface::HardwareInfo& hardware_info);
+  bool registerGpios(const hardware_interface::HardwareInfo& hardware_info);
 
   /// \brief Private data class
   std::unique_ptr<GazeboMotkinSimSystemPrivate> dataPtr;
