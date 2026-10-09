@@ -15,11 +15,13 @@
 #include "motkin_gz_ros2_control/gz_system.hpp"
 
 #include <gz/msgs/imu.pb.h>
+#include <gz/msgs/uint32.pb.h>
 #include <gz/msgs/wrench.pb.h>
 
 // c++ standard
 
 #include <array>
+#include <atomic>
 #include <cmath>
 #include <cstddef>
 #include <limits>
@@ -65,6 +67,9 @@
 namespace ros2_control_motkin {
 constexpr const char* HW_IF_GAIN_KP = "gain_kp";
 constexpr const char* HW_IF_GAIN_KD = "gain_kd";
+constexpr const char* HW_IF_CLOCK = "clock";
+constexpr const char* HW_IF_INDEX = "latest_command_index";
+constexpr const char* HW_IF_FLAGS = "flags";
 }  // namespace ros2_control_motkin
 
 struct jointData {
@@ -136,6 +141,31 @@ void ImuData::OnIMU(const gz::msgs::IMU& _msg) {
   this->imu_sensor_data_[9] = _msg.linear_acceleration().z();
 }
 
+/// Simulated motkin board status GPIO. Its state interfaces are typed
+/// (uint32/uint8), so they are owned by framework handles instead of
+/// pointing to double storage.
+class GpioData {
+ public:
+  std::string name{};
+  std::string flagsTopic{};
+  hardware_interface::StateInterface::SharedPtr clock;
+  hardware_interface::StateInterface::SharedPtr index;
+  hardware_interface::StateInterface::SharedPtr flags;
+  // Written by the gz-transport thread, read by read().
+  std::atomic<uint8_t> flags_value{0};
+  void OnFlags(const gz::msgs::UInt32& _msg);
+};
+
+void GpioData::OnFlags(const gz::msgs::UInt32& _msg) {
+  if (_msg.data() > std::numeric_limits<uint8_t>::max()) {
+    RCLCPP_WARN(rclcpp::get_logger("GazeboMotkinSimSystem"),
+                "Ignoring flags %u on '%s': does not fit in a uint8.",
+                _msg.data(), this->flagsTopic.c_str());
+    return;
+  }
+  this->flags_value = static_cast<uint8_t>(_msg.data());
+}
+
 class motkin_gz_ros2_control::GazeboMotkinSimSystemPrivate {
  public:
   GazeboMotkinSimSystemPrivate() = default;
@@ -145,6 +175,10 @@ class motkin_gz_ros2_control::GazeboMotkinSimSystemPrivate {
   std::vector<struct jointData> joints_;
   std::vector<std::shared_ptr<ImuData>> imus_;
   std::vector<std::shared_ptr<ForceTorqueData>> ft_sensors_;
+  std::vector<std::shared_ptr<GpioData>> gpios_;
+  // Number of physics steps, i.e. of write() calls, reported as the GPIO
+  // latest_command_index. Wraps like the board's uint32 counter.
+  uint32_t step_count_ = 0;
   std::vector<hardware_interface::StateInterface> state_interfaces_;
   std::vector<hardware_interface::CommandInterface> command_interfaces_;
   sim::EntityComponentManager* ecm;
@@ -459,6 +493,74 @@ bool GazeboMotkinSimSystem::initSim(
   }
 
   registerSensors(hardware_info);
+  return registerGpios(hardware_info);
+}
+
+bool GazeboMotkinSimSystem::registerGpios(
+    const hardware_interface::HardwareInfo& hardware_info) {
+  static const std::map<std::string, std::string> expected_types{
+      {ros2_control_motkin::HW_IF_CLOCK, "uint32"},
+      {ros2_control_motkin::HW_IF_INDEX, "uint32"},
+      {ros2_control_motkin::HW_IF_FLAGS, "uint8"}};
+
+  for (const auto& gpio_info : hardware_info.gpios) {
+    auto gpio = std::make_shared<GpioData>();
+    gpio->name = gpio_info.name;
+
+    if (!gpio_info.command_interfaces.empty()) {
+      RCLCPP_ERROR_STREAM(this->nh_->get_logger(),
+                          "GPIO '" << gpio->name
+                                   << "' must not have command interfaces.");
+      return false;
+    }
+
+    for (const auto& state_if : gpio_info.state_interfaces) {
+      auto it = expected_types.find(state_if.name);
+      if (it == expected_types.end()) {
+        RCLCPP_ERROR_STREAM(this->nh_->get_logger(),
+                            "GPIO '" << gpio->name
+                                     << "' has unsupported state interface '"
+                                     << state_if.name << "'.");
+        return false;
+      }
+      if (state_if.data_type != it->second) {
+        RCLCPP_ERROR_STREAM(
+            this->nh_->get_logger(),
+            "GPIO '" << gpio->name << "' state interface '" << state_if.name
+                     << "' has data_type '" << state_if.data_type
+                     << "', expected '" << it->second << "'.");
+        return false;
+      }
+      auto handle = std::make_shared<hardware_interface::StateInterface>(
+          hardware_interface::InterfaceDescription(gpio->name, state_if));
+      if (state_if.name == ros2_control_motkin::HW_IF_CLOCK) {
+        gpio->clock = handle;
+      } else if (state_if.name == ros2_control_motkin::HW_IF_INDEX) {
+        gpio->index = handle;
+      } else {
+        gpio->flags = handle;
+      }
+    }
+
+    if (gpio->flags) {
+      auto it = gpio_info.parameters.find("flags_topic");
+      gpio->flagsTopic = it != gpio_info.parameters.end()
+                             ? it->second
+                             : "/" + gpio->name + "/flags";
+      if (!this->dataPtr->node.Subscribe(gpio->flagsTopic, &GpioData::OnFlags,
+                                         gpio.get())) {
+        RCLCPP_ERROR_STREAM(this->nh_->get_logger(),
+                            "Cannot subscribe to gz topic '"
+                                << gpio->flagsTopic << "'.");
+        return false;
+      }
+      RCLCPP_INFO_STREAM(this->nh_->get_logger(),
+                         "GPIO '" << gpio->name << "' reads its flags from gz "
+                                  << "topic '" << gpio->flagsTopic
+                                  << "' (gz.msgs.UInt32, 0-255).");
+    }
+    this->dataPtr->gpios_.push_back(gpio);
+  }
   return true;
 }
 
@@ -592,9 +694,27 @@ CallbackReturn GazeboMotkinSimSystem::on_configure(
   return CallbackReturn::SUCCESS;
 }
 
-std::vector<hardware_interface::StateInterface>
-GazeboMotkinSimSystem::export_state_interfaces() {
-  return std::move(this->dataPtr->state_interfaces_);
+std::vector<hardware_interface::StateInterface::ConstSharedPtr>
+GazeboMotkinSimSystem::on_export_state_interfaces() {
+  // Joint and sensor handles still point to the double storage of
+  // dataPtr; the GPIO handles are typed and own their value, which read()
+  // updates.
+  std::vector<hardware_interface::StateInterface::ConstSharedPtr>
+      state_interfaces;
+  for (auto& state_interface : this->dataPtr->state_interfaces_) {
+    state_interfaces.push_back(
+        std::make_shared<hardware_interface::StateInterface>(
+            std::move(state_interface)));
+  }
+  this->dataPtr->state_interfaces_.clear();
+  for (const auto& gpio : this->dataPtr->gpios_) {
+    for (const auto& handle : {gpio->clock, gpio->index, gpio->flags}) {
+      if (handle) {
+        state_interfaces.push_back(handle);
+      }
+    }
+  }
+  return state_interfaces;
 }
 
 std::vector<hardware_interface::CommandInterface>
@@ -613,7 +733,24 @@ CallbackReturn GazeboMotkinSimSystem::on_deactivate(
 }
 
 hardware_interface::return_type GazeboMotkinSimSystem::read(
-    const rclcpp::Time& /*time*/, const rclcpp::Duration& /*period*/) {
+    const rclcpp::Time& time, const rclcpp::Duration& /*period*/) {
+  // Simulated board status. Like the board's counter, the clock wraps.
+  const uint32_t t_us = static_cast<uint32_t>(
+      static_cast<uint64_t>(time.nanoseconds()) / 1000u);
+  for (const auto& gpio : this->dataPtr->gpios_) {
+    // set_value() does not block: if a controller holds the handle, the
+    // value is simply refreshed at the next read().
+    if (gpio->clock) {
+      (void)gpio->clock->set_value(t_us);
+    }
+    if (gpio->index) {
+      (void)gpio->index->set_value(this->dataPtr->step_count_);
+    }
+    if (gpio->flags) {
+      (void)gpio->flags->set_value(gpio->flags_value.load());
+    }
+  }
+
   for (unsigned int i = 0; i < this->dataPtr->joints_.size(); ++i) {
     if (this->dataPtr->joints_[i].sim_joint == sim::kNullEntity) {
       continue;
@@ -739,6 +876,7 @@ hardware_interface::return_type GazeboMotkinSimSystem::write(
   }
   this->dataPtr->last_write_time_ = time;
   this->dataPtr->has_last_write_time_ = true;
+  ++this->dataPtr->step_count_;
 
   for (unsigned int i = 0; i < this->dataPtr->joints_.size(); ++i) {
     if (this->dataPtr->joints_[i].sim_joint == sim::kNullEntity) {
